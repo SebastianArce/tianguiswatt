@@ -16,6 +16,8 @@ dev = [
 
 [tool.pytest.ini_options]
 # importlib mode lets multiple `tests/` dirs coexist across workspace packages
-# without an __init__.py package-name clash.
+# without an __init__.py package-name clash; consider_namespace_packages stops the
+# src-layout member dir (orchestrator/) from shadowing the installed package.
 addopts = "--import-mode=importlib"
-testpaths = ["backend/tests", "packages/shared/tests"]
+consider_namespace_packages = true
+testpaths = ["backend/tests", "packages/shared/tests", "orchestrator/tests"]
