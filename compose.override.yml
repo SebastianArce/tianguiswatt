@@ -1,0 +1,29 @@
+# Local-development overrides — applied automatically by `docker compose`.
+# Exposes data-store ports to the host and enables the Traefik dashboard.
+# NOTE: Compose replaces (does not merge) a service's `command`, so the Traefik
+# command is repeated here in full with the extra dev flags.
+
+services:
+  traefik:
+    command:
+      - --ping=true
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "8080:8080" # dashboard (insecure, dev only)
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  clickhouse:
+    ports:
+      - "8123:8123" # HTTP
+      - "9000:9000" # native
+
+  redis:
+    ports:
+      - "6379:6379"
