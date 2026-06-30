@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: mart_generation_by_fuel
+    description: Generation by fuel per 5-minute instant, with share-of-mix %.
+    columns:
+      - name: measured_at
+        tests: [not_null]
+      - name: fuel_type
+        tests: [not_null]
+      - name: generation_mw
+        tests: [not_null]
+
+  - name: mart_supply_demand
+    description: Demand (INDO/ITSDO) vs latest-instant total generation per settlement period.
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: demand_mw
+        tests: [not_null]
+
+  - name: mart_carbon
+    description: National carbon intensity per half-hour (actual, falling back to forecast).
+    columns:
+      - name: from_ts
+        tests: [not_null]
+      - name: intensity_gco2
+        tests: [not_null]
