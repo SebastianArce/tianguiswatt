@@ -12,7 +12,16 @@ import os
 import pytest
 
 from shared.clickhouse import get_client
-from shared.migrations.runner import migrate
+from shared.migrations.runner import _statements, migrate
+
+
+def test_statements_ignores_semicolons_in_comments():
+    """A `;` inside a `-- comment` must not split the statement (regression)."""
+    sql = "CREATE TABLE t (...) ENGINE = MergeTree\n-- the period is the key;\nORDER BY x;"
+    stmts = _statements(sql)
+    assert len(stmts) == 1
+    assert "ORDER BY x" in stmts[0]
+    assert "key" not in stmts[0]  # comment stripped entirely
 
 
 @pytest.fixture

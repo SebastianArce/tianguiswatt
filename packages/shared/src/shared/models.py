@@ -23,3 +23,16 @@ class FuelInstRecord(BaseModel):
     measured_at: dt.datetime = Field(alias="startTime")
     fuel_type: str = Field(alias="fuelType")
     generation_mw: float = Field(alias="generation")
+
+
+class DemandRecord(BaseModel):
+    """One Elexon demand-outturn reading for a settlement period: INDO (national) and
+    ITSDO (transmission-system) demand in MW."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    settlement_date: dt.date = Field(alias="settlementDate")
+    settlement_period: int = Field(alias="settlementPeriod")
+    measured_at: dt.datetime = Field(alias="startTime")
+    indo_mw: int = Field(alias="initialDemandOutturn")
+    itsdo_mw: int = Field(alias="initialTransmissionSystemDemandOutturn")

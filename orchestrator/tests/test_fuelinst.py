@@ -1,17 +1,13 @@
 """Tests for FUELINST ingestion.
 
 `test_parse_fuelinst` is a pure unit test. The load test is an integration test that
-needs a running ClickHouse: skipped locally when unavailable, required in CI.
+needs a running ClickHouse (see the `client` fixture in conftest.py).
 """
 
 from __future__ import annotations
 
 import datetime as dt
-import os
 
-import pytest
-
-from shared.clickhouse import get_client
 from shared.migrations.runner import migrate
 from orchestrator.assets import load_fuelinst
 from orchestrator.elexon import parse_fuelinst
@@ -48,25 +44,6 @@ def test_parse_fuelinst():
     assert biomass.settlement_period == 44
     assert biomass.settlement_date == dt.date(2026, 6, 29)
     assert biomass.measured_at == dt.datetime(2026, 6, 29, 20, 35, tzinfo=dt.UTC)
-
-
-@pytest.fixture
-def client():
-    try:
-        c = get_client()
-        c.command("SELECT 1")
-    except Exception as exc:
-        if os.getenv("CI"):
-            raise
-        pytest.skip(f"ClickHouse not available: {exc}")
-
-    def reset() -> None:
-        c.command("DROP TABLE IF EXISTS schema_migrations")
-        c.command("DROP DATABASE IF EXISTS raw")
-
-    reset()
-    yield c
-    reset()
 
 
 def test_load_fuelinst_is_idempotent_and_revisable(client):

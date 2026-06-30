@@ -6,6 +6,7 @@ directly and must not drop — ``raw.*`` and the migration ledger.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from clickhouse_connect.driver.client import Client
@@ -29,7 +30,10 @@ def _applied_versions(client: Client) -> set[str]:
 
 
 def _statements(sql: str) -> list[str]:
-    return [stmt.strip() for stmt in sql.split(";") if stmt.strip()]
+    # Strip `-- line comments` first so a semicolon inside a comment can't split a
+    # statement, then split the remaining SQL on `;`.
+    without_comments = re.sub(r"--[^\n]*", "", sql)
+    return [stmt.strip() for stmt in without_comments.split(";") if stmt.strip()]
 
 
 def migrate(client: Client | None = None) -> list[str]:
