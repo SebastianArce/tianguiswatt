@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: stg_generation_fuelinst
+    description: Deduplicated 5-minute generation by fuel type (MW).
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: fuel_type
+        tests: [not_null]
+      - name: measured_at
+        tests: [not_null]
+      - name: generation_mw
+        tests: [not_null]
+
+  - name: stg_demand
+    description: Deduplicated demand outturn (INDO/ITSDO) per settlement period.
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+
+  - name: stg_carbon_intensity_national
+    description: Deduplicated national carbon intensity per half-hour.
+    columns:
+      - name: from_ts
+        tests: [not_null]
+      - name: intensity_index
+        tests: [not_null]

@@ -1,0 +1,10 @@
+name: renewablepulse
+version: "1.0.0"
+profile: renewablepulse
+
+model-paths: ["models"]
+
+models:
+  renewablepulse:
+    staging:
+      +materialized: view

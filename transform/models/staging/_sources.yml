@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Landing tables written by the ingestion assets (ReplacingMergeTree).
+    schema: raw
+    tables:
+      - name: generation_fuelinst
+      - name: demand
+      - name: carbon_intensity_national

@@ -12,6 +12,7 @@ dev = [
     "ruff>=0.15.0",
     "ty>=0.0.14",
     "httpx>=0.28.1",
+    "dbt-clickhouse>=1.8",
 ]
 
 [tool.pytest.ini_options]

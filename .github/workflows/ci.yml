@@ -16,6 +16,12 @@ jobs:
   quality:
     name: Lint, type-check & test
     runs-on: ubuntu-latest
+    env:
+      CLICKHOUSE_HOST: localhost
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: renewablepulse
+      CLICKHOUSE_PASSWORD: renewablepulse
+      CLICKHOUSE_DB: renewablepulse
     services:
       clickhouse:
         image: clickhouse/clickhouse-server:25.3
@@ -52,10 +58,9 @@ jobs:
         run: uv run ty check
 
       - name: Test (pytest)
-        env:
-          CLICKHOUSE_HOST: localhost
-          CLICKHOUSE_PORT: "8123"
-          CLICKHOUSE_USER: renewablepulse
-          CLICKHOUSE_PASSWORD: renewablepulse
-          CLICKHOUSE_DB: renewablepulse
         run: uv run pytest
+
+      - name: dbt build
+        run: |
+          uv run python -c "from shared.migrations.runner import migrate; print(migrate())"
+          uv run dbt build --project-dir transform --profiles-dir transform
