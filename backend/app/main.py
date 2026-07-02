@@ -40,7 +40,7 @@ if settings.backend_cors_origins:
     app.add_middleware(
         CORSMiddleware,  # ty: ignore[invalid-argument-type]  (ParamSpec inference limitation)
         allow_origins=settings.backend_cors_origins,
-        allow_methods=["*"],
+        allow_methods=["GET"],  # the API is read-only
         allow_headers=["*"],
     )
 
