@@ -21,23 +21,23 @@ sudo mkdir -p /opt/tianguiswatt && sudo chown deploy:deploy /opt/tianguiswatt
 - `DEPLOY_HOST` — the VM's IPv4
 - `DEPLOY_USER` — `deploy`
 - `DEPLOY_SSH_KEY` — the deploy **private** key
-- `POSTGRES_PASSWORD` — `openssl rand -base64 24`
-- `CLICKHOUSE_PASSWORD` — `openssl rand -base64 24`
+- `ACME_EMAIL` — your email (Let's Encrypt)
+- `POSTGRES_USER` = `tianguiswatt` · `POSTGRES_DB` = `tianguiswatt`
+- `POSTGRES_PASSWORD` — `openssl rand -hex 24`
+- `CLICKHOUSE_USER` = `tianguiswatt` · `CLICKHOUSE_DB` = `tianguiswatt`
+- `CLICKHOUSE_PASSWORD` — `openssl rand -hex 24`
 
 **3. GitHub Actions → Variables** (same page → Variables)
 - `DOMAIN` = `tianguiswatt.com`
-- `ACME_EMAIL` = `you@example.com`
-- `POSTGRES_USER` = `tianguiswatt` · `POSTGRES_DB` = `tianguiswatt`
-- `CLICKHOUSE_USER` = `tianguiswatt` · `CLICKHOUSE_DB` = `tianguiswatt`
-- `DEPLOY_ENABLED` = `true` — until set, images still build/push but the deploy step is
-  skipped (so merges don't fail before the VM is ready).
+- `DEPLOY_ENABLED` = `true` — until set, a tag still builds/pushes images but the deploy
+  step is skipped (so it doesn't try to deploy before the VM is ready).
 
 > The DB passwords must stay **stable** after the first deploy — changing them won't match
 > the existing Postgres/ClickHouse volumes.
 
 ## Deploying
-Merging to `main` **builds** the images (SHA-tagged) — validating the Dockerfiles — but
-does **not** deploy. To release, push a version tag:
+Merges to `main` don't deploy — only version tags do (image builds are validated in PR
+CI). To release, push a version tag:
 ```bash
 git tag v0.1.0 && git push origin v0.1.0
 ```
