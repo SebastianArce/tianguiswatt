@@ -1,0 +1,109 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main] # build images (validate Dockerfiles); no deploy
+    tags: ["v*"] # build + deploy this version
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build & push images (GHCR)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { image: backend, dockerfile: backend/Dockerfile, context: . }
+          - { image: frontend, dockerfile: frontend/Dockerfile.prod, context: ./frontend }
+          - { image: orchestrator, dockerfile: orchestrator/Dockerfile, context: . }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lowercase owner
+        id: o
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ steps.o.outputs.owner }}/tianguiswatt-${{ matrix.image }}
+          tags: |
+            type=sha
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Hetzner
+    needs: build
+    runs-on: ubuntu-latest
+    # Only version tags, and only once the VM + secrets are wired.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && vars.DEPLOY_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy compose files to the VM
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: compose.yml,compose.prod.yml
+          target: /opt/tianguiswatt
+      - name: Pull, migrate, and roll out
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOMAIN: ${{ vars.DOMAIN }}
+          ACME_EMAIL: ${{ vars.ACME_EMAIL }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          CLICKHOUSE_USER: ${{ vars.CLICKHOUSE_USER }}
+          CLICKHOUSE_DB: ${{ vars.CLICKHOUSE_DB }}
+          CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: GHCR_TOKEN,DOMAIN,ACME_EMAIL,POSTGRES_USER,POSTGRES_DB,POSTGRES_PASSWORD,CLICKHOUSE_USER,CLICKHOUSE_DB,CLICKHOUSE_PASSWORD
+          script: |
+            set -euo pipefail
+            cd /opt/tianguiswatt
+            umask 077
+            cat > .env <<EOF
+            DOMAIN=${DOMAIN}
+            ACME_EMAIL=${ACME_EMAIL}
+            POSTGRES_USER=${POSTGRES_USER}
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            POSTGRES_DB=${POSTGRES_DB}
+            CLICKHOUSE_USER=${CLICKHOUSE_USER}
+            CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+            CLICKHOUSE_DB=${CLICKHOUSE_DB}
+            EOF
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            export IMAGE_TAG=${{ github.ref_name }}
+            COMPOSE="docker compose -f compose.yml -f compose.prod.yml"
+            $COMPOSE pull
+            $COMPOSE up -d --wait clickhouse postgres redis
+            $COMPOSE run --rm backend python -c "from shared.migrations.runner import migrate; print(migrate())"
+            $COMPOSE up -d
+            docker image prune -f

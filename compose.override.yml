@@ -87,3 +87,5 @@ services:
           target: /app/index.html
         - action: rebuild
           path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/vite.config.ts
