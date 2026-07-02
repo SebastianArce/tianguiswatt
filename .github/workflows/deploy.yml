@@ -105,5 +105,7 @@ jobs:
             $COMPOSE pull
             $COMPOSE up -d --wait clickhouse postgres redis
             $COMPOSE run --rm backend python -c "from shared.migrations.runner import migrate; print(migrate())"
+            $COMPOSE run --rm dagster-daemon dagster asset materialize --select '*' -m orchestrator.definitions \
+              || echo "initial ingest failed; the 15-min schedule will retry"
             $COMPOSE up -d
             docker image prune -f

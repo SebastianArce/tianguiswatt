@@ -56,3 +56,13 @@ def test_carbon_history(ch_client):
     assert len(points) == 1
     assert points[0]["intensity_gco2"] == 225
     assert points[0]["intensity_index"] == "high"
+
+
+def test_history_empty_when_marts_absent(empty_ch):
+    app.dependency_overrides[get_clickhouse] = lambda: empty_ch
+    try:
+        response = TestClient(app).get("/api/generation?hours=6")
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 200
+    assert response.json() == []

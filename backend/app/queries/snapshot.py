@@ -4,28 +4,31 @@ from __future__ import annotations
 
 from clickhouse_connect.driver.client import Client
 
+from app.queries.util import query_rows
 from app.schemas import Carbon, GenerationMixItem, Snapshot, SupplyDemand
 
 
 def fetch_snapshot(client: Client) -> Snapshot:
     """Latest generation mix, supply/demand, and carbon intensity."""
-    gen_rows = client.query(
+    gen_rows = query_rows(
+        client,
         "SELECT measured_at, fuel_type, generation_mw, share_pct "
         "FROM mart_generation_by_fuel "
         "WHERE measured_at = (SELECT max(measured_at) FROM mart_generation_by_fuel) "
-        "ORDER BY share_pct DESC"
-    ).result_rows
+        "ORDER BY share_pct DESC",
+    )
     generation = [
         GenerationMixItem(fuel_type=fuel, generation_mw=mw, share_pct=share)
         for _, fuel, mw, share in gen_rows
     ]
     measured_at = gen_rows[0][0] if gen_rows else None
 
-    sd_rows = client.query(
+    sd_rows = query_rows(
+        client,
         "SELECT settlement_period, demand_mw, transmission_demand_mw, total_generation_mw "
         "FROM mart_supply_demand "
-        "ORDER BY settlement_date DESC, settlement_period DESC LIMIT 1"
-    ).result_rows
+        "ORDER BY settlement_date DESC, settlement_period DESC LIMIT 1",
+    )
     supply_demand = (
         SupplyDemand(
             settlement_period=sd_rows[0][0],
@@ -37,10 +40,11 @@ def fetch_snapshot(client: Client) -> Snapshot:
         else None
     )
 
-    carbon_rows = client.query(
+    carbon_rows = query_rows(
+        client,
         "SELECT from_ts, intensity_gco2, intensity_index "
-        "FROM mart_carbon ORDER BY from_ts DESC LIMIT 1"
-    ).result_rows
+        "FROM mart_carbon ORDER BY from_ts DESC LIMIT 1",
+    )
     carbon = (
         Carbon(
             from_ts=carbon_rows[0][0],

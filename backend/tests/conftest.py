@@ -87,3 +87,19 @@ def ch_client() -> Iterator[Client]:
     yield ch
     for table in _MART_TABLES:
         ch.command(f"DROP TABLE IF EXISTS {table}")
+
+
+@pytest.fixture
+def empty_ch() -> Iterator[Client]:
+    """A client where the marts do NOT exist (fresh-deploy / warming-up state)."""
+    try:
+        ch = get_client()
+        ch.command("SELECT 1")
+    except Exception as exc:
+        if os.getenv("CI"):
+            raise
+        pytest.skip(f"ClickHouse not available: {exc}")
+
+    for table in _MART_TABLES:
+        ch.command(f"DROP TABLE IF EXISTS {table}")
+    yield ch
