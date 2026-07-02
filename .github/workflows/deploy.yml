@@ -59,14 +59,18 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/v') && vars.DEPLOY_ENABLED == 'true' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Copy compose files to the VM
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: compose.yml,compose.prod.yml
-          target: /opt/tianguiswatt
+      - name: Copy compose files to the VM (rsync over SSH)
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -az -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
+            compose.yml compose.prod.yml \
+            "$DEPLOY_USER@$DEPLOY_HOST:/opt/tianguiswatt/"
       - name: Pull, migrate, and roll out
         uses: appleboy/ssh-action@v1
         env:
