@@ -69,7 +69,7 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           rsync -az -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
-            compose.yml compose.prod.yml \
+            compose.yml \
             "$DEPLOY_USER@$DEPLOY_HOST:/opt/tianguiswatt/"
       - name: Pull, migrate, and roll out
         uses: appleboy/ssh-action@v1
@@ -104,7 +104,7 @@ jobs:
             EOF
             echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             export IMAGE_TAG=${{ github.ref_name }}
-            COMPOSE="docker compose -f compose.yml -f compose.prod.yml"
+            COMPOSE="docker compose -f compose.yml --profile prod"
             $COMPOSE pull
             $COMPOSE up -d --wait clickhouse postgres redis
             $COMPOSE run --rm backend python -c "from shared.migrations.runner import migrate; print(migrate())"

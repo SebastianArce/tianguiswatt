@@ -1,30 +1,12 @@
 name: tianguiswatt
 
-# Base stack (production-safe defaults). Local-dev conveniences — exposed DB ports,
-# Traefik dashboard — live in compose.override.yml, which Docker applies automatically.
+# Canonical / production stack — the single source of truth.
+#   Dev:  `docker compose up` (also auto-loads compose.override.yml: build-from-source,
+#         exposed DB ports, watch; Traefik/Dagster are skipped via the `prod` profile).
+#   Prod: `docker compose -f compose.yml --profile prod up -d`  (no override; full set).
+# Config comes from a host .env (DOMAIN, ACME_EMAIL, IMAGE_TAG, *_USER/PASSWORD/DB).
 
 services:
-  traefik:
-    # v3.6.1+ negotiates the Docker API version; older Traefik hardcodes API 1.24, which
-    # Docker Engine v29+ rejects (breaks the docker provider → no routers → no TLS cert).
-    image: traefik:v3.6.1
-    restart: unless-stopped
-    command:
-      - --ping=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-    ports:
-      - "80:80"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks: [rp]
-
   postgres:
     image: postgres:17
     restart: unless-stopped
@@ -73,10 +55,114 @@ services:
       retries: 5
     networks: [rp]
 
+  backend:
+    image: ghcr.io/sebastianarce/tianguiswatt-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    networks: [rp]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)
+      # Higher priority than the frontend router so /api hits the backend, not the SPA
+      # (both match the host; Traefik would otherwise tie-break by rule length).
+      - traefik.http.routers.backend.priority=100
+      - traefik.http.routers.backend.entrypoints=websecure
+      - traefik.http.routers.backend.tls.certresolver=le
+      - traefik.http.services.backend.loadbalancer.server.port=8000
+
+  frontend:
+    image: ghcr.io/sebastianarce/tianguiswatt-frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    networks: [rp]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
+      - traefik.http.routers.frontend.entrypoints=websecure
+      - traefik.http.routers.frontend.tls.certresolver=le
+      - traefik.http.services.frontend.loadbalancer.server.port=80
+
+  # --- prod-only (skipped in dev, which uses the direct ports above) ---
+
+  traefik:
+    profiles: ["prod"]
+    # v3.6.1+ negotiates the Docker API version; older Traefik hardcodes API 1.24, which
+    # Docker Engine v29+ rejects (breaks the docker provider → no routers → no TLS cert).
+    image: traefik:v3.6.1
+    restart: unless-stopped
+    command:
+      - --ping=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/acme/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/acme
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [rp]
+
+  dagster-daemon:
+    profiles: ["prod"]
+    image: ghcr.io/sebastianarce/tianguiswatt-orchestrator:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["dagster-daemon", "run", "-m", "orchestrator.definitions"]
+    environment: &dagster-env
+      DAGSTER_PG_HOST: postgres
+      DAGSTER_PG_USERNAME: ${POSTGRES_USER}
+      DAGSTER_PG_PASSWORD: ${POSTGRES_PASSWORD}
+      DAGSTER_PG_DB: ${POSTGRES_DB}
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    networks: [rp]
+
+  # No Traefik route (the Dagster UI has no auth). Bound to the VM's localhost only —
+  # reach it with: ssh -L 3000:localhost:3000 deploy@tianguiswatt.com
+  dagster-webserver:
+    profiles: ["prod"]
+    image: ghcr.io/sebastianarce/tianguiswatt-orchestrator:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment: *dagster-env
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [rp]
+
 volumes:
   pg_data:
   ch_data:
   redis_data:
+  acme:
 
 networks:
   rp:

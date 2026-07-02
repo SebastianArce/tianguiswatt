@@ -1,20 +1,9 @@
 # Local-development overrides — applied automatically by `docker compose`.
-# Exposes data-store ports to the host and enables the Traefik dashboard.
-# NOTE: Compose replaces (does not merge) a service's `command`, so the Traefik
-# command is repeated here in full with the extra dev flags.
+# Builds backend/frontend from source, exposes data-store ports to the host, enables watch.
+# Traefik and Dagster are prod-only (compose.yml `profiles: [prod]`), so dev skips them and
+# reaches the app on the direct ports below.
 
 services:
-  traefik:
-    command:
-      - --ping=true
-      - --api.dashboard=true
-      - --api.insecure=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-    ports:
-      - "8080:8080" # dashboard (insecure, dev only)
-
   postgres:
     ports:
       - "5432:5432"
@@ -52,10 +41,6 @@ services:
       CLICKHOUSE_DB: ${CLICKHOUSE_DB:-tianguiswatt}
     ports:
       - "8000:8000"
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-    networks: [rp]
     develop:
       watch:
         - action: sync
@@ -76,7 +61,6 @@ services:
     ports:
       - "5173:5173"
     depends_on: [backend]
-    networks: [rp]
     develop:
       watch:
         - action: sync
