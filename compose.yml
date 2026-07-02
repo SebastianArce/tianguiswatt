@@ -5,11 +5,10 @@ name: tianguiswatt
 
 services:
   traefik:
-    image: traefik:v3.3
+    # v3.6.1+ negotiates the Docker API version; older Traefik hardcodes API 1.24, which
+    # Docker Engine v29+ rejects (breaks the docker provider → no routers → no TLS cert).
+    image: traefik:v3.6.1
     restart: unless-stopped
-    # Traefik's Docker client defaults to API v1.24; recent Docker Engine requires >= 1.40.
-    environment:
-      - DOCKER_API_VERSION=1.44
     command:
       - --ping=true
       - --providers.docker=true
