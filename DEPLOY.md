@@ -2,8 +2,9 @@
 
 CD lives in `.github/workflows/deploy.yml`. On every push to `main` it builds the three
 images and pushes them to **GHCR**, then — once enabled — deploys to a Hetzner VM over
-SSH. Production runs `compose.yml` + `compose.prod.yml` (Traefik TLS, no exposed DB
-ports); ingestion + dbt run automatically via the Dagster daemon every 15 minutes.
+SSH. Production runs `compose.yml` with the `prod` profile
+(`docker compose -f compose.yml --profile prod up -d` — Traefik TLS + Dagster, no exposed
+DB ports); ingestion + dbt run automatically via the Dagster daemon every 15 minutes.
 
 All config lives in **GitHub** (single source of truth); the deploy workflow writes the
 VM's `/opt/tianguiswatt/.env` from it on each rollout. Nothing secret is created by hand
@@ -52,4 +53,4 @@ automatically (needs DNS + port 80 open); first issuance takes a few seconds.
 - **Images:** `ghcr.io/sebastianarce/tianguiswatt-{backend,frontend,orchestrator}`.
 - **Dagster UI** (internal, no auth): `ssh -L 3000:localhost:3000 deploy@tianguiswatt.com`,
   then open <http://localhost:3000>.
-- **Logs:** `docker compose -f compose.yml -f compose.prod.yml logs -f <service>` on the VM.
+- **Logs:** `docker compose -f compose.yml --profile prod logs -f <service>` on the VM.
