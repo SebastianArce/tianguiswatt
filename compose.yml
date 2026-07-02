@@ -64,16 +64,16 @@ services:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      # The SPA (apex + www) calls this API cross-origin from api.<domain>.
+      RP_BACKEND_CORS_ORIGINS: "https://${DOMAIN},https://www.${DOMAIN}"
     depends_on:
       clickhouse:
         condition: service_healthy
     networks: [rp]
     labels:
       - traefik.enable=true
-      - traefik.http.routers.backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)
-      # Higher priority than the frontend router so /api hits the backend, not the SPA
-      # (both match the host; Traefik would otherwise tie-break by rule length).
-      - traefik.http.routers.backend.priority=100
+      # Own subdomain — no overlap with the frontend router, so no priority needed.
+      - traefik.http.routers.backend.rule=Host(`api.${DOMAIN}`)
       - traefik.http.routers.backend.entrypoints=websecure
       - traefik.http.routers.backend.tls.certresolver=le
       - traefik.http.services.backend.loadbalancer.server.port=8000

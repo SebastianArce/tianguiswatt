@@ -48,6 +48,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Baked into the frontend bundle; ignored by the backend/orchestrator images.
+          build-args: |
+            VITE_API_URL=https://api.${{ vars.DOMAIN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -12,7 +12,8 @@ on the VM.
 
 **1. VM + DNS**
 Ubuntu VM with Docker, a `deploy` user in the `docker` group, firewall allowing
-`22/80/443`, DNS `A` records `tianguiswatt.com` (+ `www`) → the VM's IPv4, and the deploy
+`22/80/443`, DNS `A` records `tianguiswatt.com` (+ `www` **and `api`** — the frontend is
+served at the apex, the API at `api.tianguiswatt.com`) → the VM's IPv4, and the deploy
 directory pre-created (only spot needing sudo):
 ```bash
 sudo mkdir -p /opt/tianguiswatt && sudo chown deploy:deploy /opt/tianguiswatt
