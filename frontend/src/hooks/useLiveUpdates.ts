@@ -5,7 +5,8 @@ import { useEffect } from 'react'
 export function useLiveUpdates() {
   const queryClient = useQueryClient()
   useEffect(() => {
-    const source = new EventSource('/api/events')
+    const base = import.meta.env.VITE_API_URL ?? ''
+    const source = new EventSource(`${base}/api/events`)
     source.addEventListener('update', () => {
       void queryClient.invalidateQueries()
     })

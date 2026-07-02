@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import events, health, history, snapshot
 from app.core.config import settings
@@ -32,6 +33,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+# Cross-origin access for the SPA when it's served from a different host (e.g. the API on
+# api.<domain>). Off in dev, where the Vite proxy makes calls same-origin.
+if settings.backend_cors_origins:
+    app.add_middleware(
+        CORSMiddleware,  # ty: ignore[invalid-argument-type]  (ParamSpec inference limitation)
+        allow_origins=settings.backend_cors_origins,
+        allow_methods=["GET"],  # the API is read-only
+        allow_headers=["*"],
+    )
 
 app.include_router(health.router, prefix="/api")
 app.include_router(snapshot.router, prefix="/api")

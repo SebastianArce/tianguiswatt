@@ -15,6 +15,10 @@ from clickhouse_connect.driver.client import Client
 
 from shared.clickhouse import get_client
 
+# Set before app import — settings + the CORS middleware are read at import time. Lets the
+# CORS test assert the header; harmless elsewhere (only affects requests with an Origin header).
+os.environ.setdefault("RP_BACKEND_CORS_ORIGINS", "https://tianguiswatt.com")
+
 _MART_TABLES = ("mart_generation_by_fuel", "mart_supply_demand", "mart_carbon")
 
 
