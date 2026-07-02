@@ -1,0 +1,15 @@
+# Dagster instance config for production: run/event/schedule storage in Postgres
+# (the OLTP system-of-record), shared by the webserver and the daemon. Copied into
+# DAGSTER_HOME in the image; connection comes from DAGSTER_PG_* env vars.
+storage:
+  postgres:
+    postgres_db:
+      username:
+        env: DAGSTER_PG_USERNAME
+      password:
+        env: DAGSTER_PG_PASSWORD
+      hostname:
+        env: DAGSTER_PG_HOST
+      db_name:
+        env: DAGSTER_PG_DB
+      port: 5432
