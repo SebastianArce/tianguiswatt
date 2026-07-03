@@ -34,3 +34,28 @@ export function fuelColor(code: string | undefined): string {
   if (c.startsWith('INT')) return INTERCONNECT
   return FUEL_COLORS[c] ?? '#a7afab'
 }
+
+/** Display fuel families for the 24h generation stack, in bottom-to-top stacking order. */
+export const FUEL_GROUPS = [
+  { key: 'Nuclear', color: '#5f74a8' },
+  { key: 'Gas', color: '#8b909a' },
+  { key: 'Biomass', color: '#9a7d5e' },
+  { key: 'Hydro', color: '#5987a6' },
+  { key: 'Imports', color: INTERCONNECT },
+  { key: 'Wind', color: '#3f8d84' },
+  { key: 'Solar', color: '#d7a13f' },
+  { key: 'Other', color: '#6f747c' },
+] as const
+
+/** Map a raw FUELINST fuel code to its display family. */
+export function fuelGroup(code: string): string {
+  const c = code.toUpperCase()
+  if (c.startsWith('INT')) return 'Imports'
+  if (c === 'CCGT' || c === 'OCGT') return 'Gas'
+  if (c === 'NPSHYD' || c === 'PS') return 'Hydro'
+  if (c === 'WIND') return 'Wind'
+  if (c === 'SOLAR') return 'Solar'
+  if (c === 'NUCLEAR') return 'Nuclear'
+  if (c === 'BIOMASS') return 'Biomass'
+  return 'Other' // COAL, OIL, OTHER, …
+}

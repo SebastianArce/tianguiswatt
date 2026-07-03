@@ -5,6 +5,7 @@ const SNAPSHOT = {
   generation: [
     { fuel_type: 'CCGT', generation_mw: 16228, share_pct: 57.35 },
     { fuel_type: 'WIND', generation_mw: 2060, share_pct: 7.28 },
+    { fuel_type: 'INTFR', generation_mw: 2000, share_pct: 7.07 },
   ],
   supply_demand: {
     settlement_period: 42,
@@ -76,6 +77,32 @@ const TIMESERIES = [
   { bucket: '2026-06-30T20:00:00', value: 20000 },
 ]
 
+const GENERATION = [
+  { measured_at: '2026-06-30T19:30:00', fuel_type: 'CCGT', generation_mw: 16000, share_pct: 57 },
+  { measured_at: '2026-06-30T19:30:00', fuel_type: 'WIND', generation_mw: 2000, share_pct: 7 },
+  { measured_at: '2026-06-30T20:00:00', fuel_type: 'CCGT', generation_mw: 16228, share_pct: 57 },
+  { measured_at: '2026-06-30T20:00:00', fuel_type: 'WIND', generation_mw: 2060, share_pct: 7 },
+]
+
+const ACCEPTED = [
+  {
+    national_grid_bm_unit: 'PEMB-1',
+    bm_unit: 'T_PEMB-1',
+    acceptance_time: '2026-06-30T20:05:00',
+    level_from: 0,
+    level_to: 180,
+    so_flag: false,
+  },
+  {
+    national_grid_bm_unit: 'MINETY-1',
+    bm_unit: 'T_MINETY-1',
+    acceptance_time: '2026-06-30T20:00:00',
+    level_from: 90,
+    level_to: -45,
+    so_flag: true,
+  },
+]
+
 async function mockApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
   await page.route('**/api/supply-demand*', (route) =>
@@ -83,6 +110,10 @@ async function mockApi(page: import('@playwright/test').Page) {
   )
   await page.route('**/api/prices*', (route) => route.fulfill({ json: PRICES }))
   await page.route('**/api/bid-stack', (route) => route.fulfill({ json: BID_STACK }))
+  await page.route('**/api/generation*', (route) => route.fulfill({ json: GENERATION }))
+  await page.route('**/api/accepted-actions*', (route) =>
+    route.fulfill({ json: ACCEPTED }),
+  )
   await page.route('**/api/timeseries*', (route) => route.fulfill({ json: TIMESERIES }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
@@ -99,8 +130,18 @@ test('home renders live data from the API', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Supply vs demand' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Carbon intensity' })).toBeVisible()
 
+  // control-room right rail
+  await expect(
+    page.getByRole('heading', { name: 'Interconnector flows' }),
+  ).toBeVisible()
+  await expect(page.getByText('France')).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Balancing mechanism' }),
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Actions accepted' })).toBeVisible()
+  await expect(page.getByText('PEMB-1')).toBeVisible()
+
   // data-derived text (rendered outside the ECharts canvas so it is assertable)
-  await expect(page.getByText(/CCGT/)).toBeVisible()
   await expect(page.getByText(/very high/)).toBeVisible()
   await expect(page.getByText(/27367 MW/)).toBeVisible()
 
