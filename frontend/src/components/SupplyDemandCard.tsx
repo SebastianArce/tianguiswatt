@@ -2,6 +2,7 @@ import type { EChartsOption } from 'echarts'
 import { useMemo } from 'react'
 import { useSupplyDemandHistory } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
+import { chart } from '@/lib/theme'
 import { Card } from './Card'
 
 export function SupplyDemandCard() {
@@ -10,11 +11,22 @@ export function SupplyDemandCard() {
   const option = useMemo<EChartsOption>(() => {
     const points = data ?? []
     return {
+      color: [chart.ink, chart.teal],
       tooltip: { trigger: 'axis' },
-      legend: { textStyle: { color: '#a3a3a3' }, top: 0 },
+      legend: { textStyle: { color: chart.muted }, top: 0 },
       grid: { left: 52, right: 16, top: 32, bottom: 28 },
-      xAxis: { type: 'time', axisLabel: { color: '#737373' } },
-      yAxis: { type: 'value', name: 'MW', axisLabel: { color: '#737373' } },
+      xAxis: {
+        type: 'time',
+        axisLabel: { color: chart.muted },
+        axisLine: { lineStyle: { color: chart.line } },
+      },
+      yAxis: {
+        type: 'value',
+        name: 'MW',
+        nameTextStyle: { color: chart.muted },
+        axisLabel: { color: chart.muted },
+        splitLine: { lineStyle: { color: chart.line } },
+      },
       series: [
         {
           name: 'Demand',
@@ -38,10 +50,10 @@ export function SupplyDemandCard() {
     <Card title="Supply vs demand" subtitle="National demand vs total generation">
       <div ref={chartRef} className="h-64 w-full" />
       {latest && (
-        <p className="mt-2 text-sm text-neutral-300">
-          Demand <span className="font-semibold">{latest.demand_mw} MW</span> ·
+        <p className="mt-2 text-sm text-slate">
+          Demand <span className="font-mono text-ink">{latest.demand_mw} MW</span> ·
           Generation{' '}
-          <span className="font-semibold">{latest.total_generation_mw} MW</span>
+          <span className="font-mono text-ink">{latest.total_generation_mw} MW</span>
         </p>
       )}
     </Card>

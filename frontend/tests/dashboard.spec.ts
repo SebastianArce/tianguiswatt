@@ -36,7 +36,7 @@ const SUPPLY_DEMAND = [
   },
 ]
 
-test('dashboard renders live data from the API', async ({ page }) => {
+async function mockApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
   await page.route('**/api/supply-demand*', (route) =>
     route.fulfill({ json: SUPPLY_DEMAND }),
@@ -44,16 +44,37 @@ test('dashboard renders live data from the API', async ({ page }) => {
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
+}
 
+test('home renders live data from the API', async ({ page }) => {
+  await mockApi(page)
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'TianguisWatt' })).toBeVisible()
-  await expect(page.getByText('Generation mix')).toBeVisible()
-  await expect(page.getByText('Supply vs demand')).toBeVisible()
-  await expect(page.getByText('Carbon intensity')).toBeVisible()
+  await expect(page.getByText('TianguisWatt')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /the grid, right now/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Generation mix' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Supply vs demand' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Carbon intensity' })).toBeVisible()
 
   // data-derived text (rendered outside the ECharts canvas so it is assertable)
   await expect(page.getByText(/CCGT/)).toBeVisible()
   await expect(page.getByText(/very high/)).toBeVisible()
   await expect(page.getByText(/27367 MW/)).toBeVisible()
+})
+
+test('nav switches between pages', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/')
+
+  await page.getByRole('link', { name: 'Explore' }).click()
+  await expect(page).toHaveURL(/\/explore$/)
+  await expect(
+    page.getByRole('heading', { name: /merit-order bid stack/i }),
+  ).toBeVisible()
+
+  await page.getByRole('link', { name: 'Learn' }).click()
+  await expect(page).toHaveURL(/\/learn$/)
+  await expect(
+    page.getByRole('heading', { name: /how the gb market sets a price/i }),
+  ).toBeVisible()
 })

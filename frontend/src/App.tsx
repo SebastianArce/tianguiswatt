@@ -1,25 +1,17 @@
-import { CarbonCard } from '@/components/CarbonCard'
-import { GenerationMixCard } from '@/components/GenerationMixCard'
-import { SupplyDemandCard } from '@/components/SupplyDemandCard'
-import { useLiveUpdates } from '@/hooks/useLiveUpdates'
+import { Route, Routes } from 'react-router-dom'
+import { RootLayout } from '@/components/RootLayout'
+import { ExplorePage } from '@/pages/ExplorePage'
+import { HomePage } from '@/pages/HomePage'
+import { LearnPage } from '@/pages/LearnPage'
 
 export default function App() {
-  useLiveUpdates()
-
   return (
-    <main className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="border-b border-neutral-800 px-6 py-5">
-        <h1 className="text-2xl font-bold tracking-tight">TianguisWatt</h1>
-        <p className="text-sm text-neutral-400">
-          A live view of the GB electricity market — the charts update automatically as
-          new data arrives.
-        </p>
-      </header>
-      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
-        <GenerationMixCard />
-        <SupplyDemandCard />
-        <CarbonCard />
-      </div>
-    </main>
+    <Routes>
+      <Route element={<RootLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="explore" element={<ExplorePage />} />
+        <Route path="learn" element={<LearnPage />} />
+      </Route>
+    </Routes>
   )
 }
