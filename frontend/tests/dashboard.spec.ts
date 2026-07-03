@@ -70,6 +70,12 @@ const BID_STACK = {
   ],
 }
 
+const TIMESERIES = [
+  { bucket: '2026-06-30T18:00:00', value: 22000 },
+  { bucket: '2026-06-30T19:00:00', value: 21000 },
+  { bucket: '2026-06-30T20:00:00', value: 20000 },
+]
+
 async function mockApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
   await page.route('**/api/supply-demand*', (route) =>
@@ -77,6 +83,7 @@ async function mockApi(page: import('@playwright/test').Page) {
   )
   await page.route('**/api/prices*', (route) => route.fulfill({ json: PRICES }))
   await page.route('**/api/bid-stack', (route) => route.fulfill({ json: BID_STACK }))
+  await page.route('**/api/timeseries*', (route) => route.fulfill({ json: TIMESERIES }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
@@ -110,6 +117,12 @@ test('nav switches between pages', async ({ page }) => {
   await expect(page).toHaveURL(/\/explore$/)
   await expect(
     page.getByRole('heading', { name: /balancing offer stack/i }),
+  ).toBeVisible()
+
+  await page.getByRole('link', { name: 'Trends' }).click()
+  await expect(page).toHaveURL(/\/trends$/)
+  await expect(
+    page.getByRole('heading', { name: /trends over time/i }),
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Learn' }).click()

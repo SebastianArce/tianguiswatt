@@ -48,3 +48,20 @@ export function useBidStack() {
     },
   })
 }
+
+export function useTimeseries(
+  metric: 'demand' | 'generation' | 'carbon' | 'price',
+  granularity: 'sp' | 'hour' | 'day',
+  hours: number,
+) {
+  return useQuery({
+    queryKey: ['timeseries', metric, granularity, hours],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/timeseries', {
+        params: { query: { metric, granularity, hours } },
+      })
+      if (error) throw error
+      return data
+    },
+  })
+}
