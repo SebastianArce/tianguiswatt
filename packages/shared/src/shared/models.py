@@ -88,3 +88,45 @@ class MarketIndexPriceRecord(BaseModel):
     data_provider: str = Field(alias="dataProvider")
     price: float
     volume: float
+
+
+class BidOfferRecord(BaseModel):
+    """One Balancing Mechanism bid-offer pair (Elexon BOD): a BM unit's submitted bid and
+    offer prices (£/MWh) over a level (MW) range for a settlement period. `pairId` numbers
+    the pairs (negative = bids, positive = offers)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    settlement_date: dt.date = Field(alias="settlementDate")
+    settlement_period: int = Field(alias="settlementPeriod")
+    bm_unit: str = Field(alias="bmUnit")
+    pair_id: int = Field(alias="pairId")
+    time_from: dt.datetime = Field(alias="timeFrom")
+    time_to: dt.datetime = Field(alias="timeTo")
+    level_from: int = Field(alias="levelFrom")
+    level_to: int = Field(alias="levelTo")
+    bid: float
+    offer: float
+    national_grid_bm_unit: str = Field(alias="nationalGridBmUnit")
+
+
+class BidOfferAcceptanceRecord(BaseModel):
+    """One accepted Balancing Mechanism action (Elexon BOALF): NESO's acceptance of a
+    unit's bid/offer, keyed by acceptance number. `so_flag` marks system (vs energy)
+    actions; `stor_flag` marks Short-Term Operating Reserve."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    settlement_date: dt.date = Field(alias="settlementDate")
+    settlement_period_from: int = Field(alias="settlementPeriodFrom")
+    settlement_period_to: int = Field(alias="settlementPeriodTo")
+    bm_unit: str = Field(alias="bmUnit")
+    acceptance_number: int = Field(alias="acceptanceNumber")
+    acceptance_time: dt.datetime = Field(alias="acceptanceTime")
+    time_from: dt.datetime = Field(alias="timeFrom")
+    time_to: dt.datetime = Field(alias="timeTo")
+    level_from: int = Field(alias="levelFrom")
+    level_to: int = Field(alias="levelTo")
+    so_flag: bool = Field(alias="soFlag")
+    stor_flag: bool = Field(alias="storFlag")
+    national_grid_bm_unit: str = Field(alias="nationalGridBmUnit")
