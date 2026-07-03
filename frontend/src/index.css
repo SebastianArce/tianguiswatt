@@ -1,1 +1,35 @@
 @import 'tailwindcss';
+
+/* Editorial design language (see the Claude Design "Electricity Market Explorer").
+   Tokens become Tailwind utilities: bg-paper, text-ink, text-slate, border-line,
+   font-display, font-mono, text-wind, etc. */
+@theme {
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --color-ink: #17211f;
+  --color-teal: #14716b;
+  --color-paper: #f6f6f2;
+  --color-mist: #e7eae8;
+  --color-slate: #54615b; /* body text */
+  --color-muted: #8a938f; /* labels / secondary */
+  --color-line: rgba(20, 30, 28, 0.1); /* hairline borders */
+
+  /* generation fuels */
+  --color-wind: #3f8d84;
+  --color-solar: #d7a13f;
+  --color-nuclear: #5f74a8;
+  --color-gas: #8b909a;
+  --color-interconnect: #5f9e78;
+  --color-biomass: #9a7d5e;
+  --color-hydro: #5987a6;
+}
+
+body {
+  margin: 0;
+  background: var(--color-mist);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}

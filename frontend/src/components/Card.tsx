@@ -10,11 +10,9 @@ export function Card({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-5">
-      <h2 className="text-sm font-semibold tracking-wide text-neutral-300 uppercase">
-        {title}
-      </h2>
-      {subtitle && <p className="mt-0.5 text-xs text-neutral-500">{subtitle}</p>}
+    <section className="rounded-[10px] border border-line bg-paper p-5 shadow-sm">
+      <h2 className="font-display text-lg leading-tight text-ink">{title}</h2>
+      {subtitle && <p className="mt-0.5 text-xs text-slate">{subtitle}</p>}
       <div className="mt-4">{children}</div>
     </section>
   )

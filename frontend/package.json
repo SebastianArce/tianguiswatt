@@ -19,6 +19,7 @@
     "openapi-fetch": "^0.13",
     "react": "^19",
     "react-dom": "^19",
+    "react-router-dom": "^7.18.1",
     "tailwind-merge": "^3"
   },
   "devDependencies": {

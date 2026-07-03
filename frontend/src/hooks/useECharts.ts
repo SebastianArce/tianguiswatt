@@ -1,5 +1,11 @@
 import * as echarts from 'echarts'
 import { useEffect, useRef } from 'react'
+import { chart as tokens } from '@/lib/theme'
+
+/** Base text style so every chart inherits the design fonts/colours. */
+const base: echarts.EChartsOption = {
+  textStyle: { fontFamily: tokens.font, color: tokens.slate },
+}
 
 /** Mount an ECharts instance on a div and keep it in sync with `option`. */
 export function useECharts(option: echarts.EChartsOption) {
@@ -19,7 +25,7 @@ export function useECharts(option: echarts.EChartsOption) {
   }, [])
 
   useEffect(() => {
-    chartRef.current?.setOption(option, true)
+    chartRef.current?.setOption({ ...base, ...option }, true)
   }, [option])
 
   return containerRef
