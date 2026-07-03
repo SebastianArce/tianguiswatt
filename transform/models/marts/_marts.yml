@@ -60,3 +60,13 @@ models:
         tests: [not_null]
       - name: value
         tests: [not_null]
+
+  - name: mart_accepted_actions
+    description: Recent accepted BM actions (BOALF), one row per acceptance.
+    columns:
+      - name: acceptance_number
+        tests: [not_null]
+      - name: national_grid_bm_unit
+        tests: [not_null]
+      - name: acceptance_time
+        tests: [not_null]

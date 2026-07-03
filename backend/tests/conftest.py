@@ -26,6 +26,7 @@ _MART_TABLES = (
     "mart_prices",
     "mart_bid_stack",
     "mart_metrics",
+    "mart_accepted_actions",
 )
 
 
@@ -213,6 +214,55 @@ def _seed(ch: Client) -> None:
             ["price", "hour", dt.datetime(2026, 6, 30, 20, 0), 100.0],  # other metric
         ],
         column_names=["metric", "granularity", "bucket", "value"],
+    )
+    ch.command(
+        "CREATE TABLE mart_accepted_actions "
+        "(acceptance_number UInt64, national_grid_bm_unit String, bm_unit Nullable(String), "
+        "acceptance_time DateTime, settlement_date Date, settlement_period_from UInt8, "
+        "level_from Int32, level_to Int32, so_flag Bool, stor_flag Bool) "
+        "ENGINE = MergeTree ORDER BY acceptance_time"
+    )
+    ch.insert(
+        "mart_accepted_actions",
+        [
+            # newest first when ordered by acceptance_time desc: PEMB (20:05) then MINETY (20:00)
+            [
+                101,
+                "PEMB-1",
+                "T_PEMB-1",
+                dt.datetime(2026, 6, 30, 20, 0),
+                d,
+                42,
+                0,
+                90,
+                True,
+                False,
+            ],
+            [
+                102,
+                "MINP-1",
+                "T_MINETY-1",
+                dt.datetime(2026, 6, 30, 20, 5),
+                d,
+                42,
+                400,
+                580,
+                False,
+                False,
+            ],
+        ],
+        column_names=[
+            "acceptance_number",
+            "national_grid_bm_unit",
+            "bm_unit",
+            "acceptance_time",
+            "settlement_date",
+            "settlement_period_from",
+            "level_from",
+            "level_to",
+            "so_flag",
+            "stor_flag",
+        ],
     )
 
 

@@ -7,7 +7,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import bid_stack, events, health, history, snapshot, timeseries
+from app.api import (
+    accepted_actions,
+    bid_stack,
+    events,
+    health,
+    history,
+    snapshot,
+    timeseries,
+)
 from app.core.config import settings
 from app.core.events import EventHub
 from app.queries.util import query_rows
@@ -52,4 +60,5 @@ app.include_router(snapshot.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(bid_stack.router, prefix="/api")
 app.include_router(timeseries.router, prefix="/api")
+app.include_router(accepted_actions.router, prefix="/api")
 app.include_router(events.router, prefix="/api")
