@@ -8,6 +8,7 @@ export function StatTicker() {
   const sd = data?.supply_demand
   const carbon = data?.carbon
   const wind = data?.generation?.find((g) => g.fuel_type === 'WIND')?.share_pct
+  const freq = data?.frequency_hz
 
   const dash = '—'
   const tiles: Tile[] = [
@@ -23,6 +24,11 @@ export function StatTicker() {
       unit: 'GW',
     },
     {
+      label: 'Frequency',
+      value: freq != null ? freq.toFixed(2) : dash,
+      unit: 'Hz',
+    },
+    {
       label: 'Carbon',
       value: carbon?.intensity_gco2?.toString() ?? dash,
       unit: 'gCO₂/kWh',
@@ -32,11 +38,6 @@ export function StatTicker() {
       value: wind != null ? wind.toFixed(0) : dash,
       unit: '%',
       accent: 'text-wind',
-    },
-    {
-      label: 'Net imbalance',
-      value: price ? price.net_imbalance_volume.toFixed(0) : dash,
-      unit: 'MWh',
     },
   ]
 

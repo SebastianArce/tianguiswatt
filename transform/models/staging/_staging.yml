@@ -68,3 +68,11 @@ models:
         tests: [not_null]
       - name: national_grid_bm_unit
         tests: [not_null]
+
+  - name: stg_system_frequency
+    description: Deduplicated GB system-frequency readings, keyed by measurement time.
+    columns:
+      - name: measured_at
+        tests: [not_null]
+      - name: frequency_hz
+        tests: [not_null]

@@ -42,6 +42,7 @@ class Snapshot(BaseModel):
     supply_demand: SupplyDemand | None
     carbon: Carbon | None
     price: Price | None
+    frequency_hz: float | None
 
 
 # --- time-series history points ---

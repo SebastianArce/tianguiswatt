@@ -383,6 +383,17 @@
               }
             ]
           },
+          "frequency_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Hz"
+          },
           "generation": {
             "items": {
               "$ref": "#/components/schemas/GenerationMixItem"
@@ -428,7 +439,8 @@
           "generation",
           "supply_demand",
           "carbon",
-          "price"
+          "price",
+          "frequency_hz"
         ],
         "title": "Snapshot",
         "type": "object"

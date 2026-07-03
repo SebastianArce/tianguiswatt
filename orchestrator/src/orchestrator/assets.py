@@ -14,6 +14,7 @@ from shared.models import (
     BidOfferRecord,
     CarbonIntensityRecord,
     DemandRecord,
+    FrequencyRecord,
     FuelInstRecord,
     MarketIndexPriceRecord,
     SystemPriceRecord,
@@ -23,12 +24,14 @@ from orchestrator.elexon import (
     fetch_bid_offer,
     fetch_bid_offer_acceptances,
     fetch_demand,
+    fetch_frequency,
     fetch_fuelinst,
     fetch_market_index_price,
     fetch_system_prices,
     parse_bid_offer,
     parse_bid_offer_acceptances,
     parse_demand,
+    parse_frequency,
     parse_fuelinst,
     parse_market_index_price,
     parse_system_prices,
@@ -120,6 +123,10 @@ BOALF_COLUMNS = [
     "national_grid_bm_unit",
     "ingest_version",
 ]
+
+
+FREQUENCY_TABLE = "raw.system_frequency"
+FREQUENCY_COLUMNS = ["measured_at", "frequency_hz", "ingest_version"]
 
 
 def _ingest_version() -> int:
@@ -277,6 +284,15 @@ def load_bid_offer_acceptances(
     return len(rows)
 
 
+def load_frequency(
+    client: Client, records: list[FrequencyRecord], ingest_version: int
+) -> int:
+    """Insert system-frequency readings tagged with an ingest version."""
+    rows = [[r.measured_at, r.frequency_hz, ingest_version] for r in records]
+    client.insert(FREQUENCY_TABLE, rows, column_names=FREQUENCY_COLUMNS)
+    return len(rows)
+
+
 @asset(description="Instantaneous GB generation by fuel type (Elexon FUELINST).")
 def generation_fuelinst(context: AssetExecutionContext) -> MaterializeResult:
     """Fetch FUELINST, validate, and load into ClickHouse raw."""
@@ -403,4 +419,23 @@ def bid_offer_acceptance(context: AssetExecutionContext) -> MaterializeResult:
     finally:
         client.close()
     context.log.info(f"Ingested {rows} BOALF rows (ingest_version={ingest_version})")
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+@asset(description="GB system frequency, recent window (Elexon).")
+def system_frequency(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch the last 30 minutes of frequency readings and load into ClickHouse raw."""
+    now = dt.datetime.now(tz=dt.UTC)
+    start = now - dt.timedelta(minutes=30)
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    records = parse_frequency(fetch_frequency(start.strftime(fmt), now.strftime(fmt)))
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_frequency(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(
+        f"Ingested {rows} frequency rows (ingest_version={ingest_version})"
+    )
     return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})

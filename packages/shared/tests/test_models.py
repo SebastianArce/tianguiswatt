@@ -7,6 +7,7 @@ import datetime as dt
 from shared.models import (
     BidOfferAcceptanceRecord,
     BidOfferRecord,
+    FrequencyRecord,
     MarketIndexPriceRecord,
     SystemPriceRecord,
 )
@@ -99,3 +100,11 @@ def test_bid_offer_acceptance_record_parses_api_shape():
     assert r.acceptance_number == 11213
     assert r.so_flag is True and r.stor_flag is False
     assert r.bm_unit == "T_BROCW-1"
+
+
+def test_frequency_record_parses_api_shape():
+    r = FrequencyRecord.model_validate(
+        {"measurementTime": "2026-07-03T17:35:45Z", "frequency": 49.9}
+    )
+    assert r.frequency_hz == 49.9
+    assert r.measured_at == dt.datetime(2026, 7, 3, 17, 35, 45, tzinfo=dt.UTC)

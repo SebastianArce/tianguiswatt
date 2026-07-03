@@ -70,3 +70,11 @@ models:
         tests: [not_null]
       - name: acceptance_time
         tests: [not_null]
+
+  - name: mart_frequency
+    description: GB system-frequency time series; the dashboard reads the latest value.
+    columns:
+      - name: measured_at
+        tests: [not_null]
+      - name: frequency_hz
+        tests: [not_null]
