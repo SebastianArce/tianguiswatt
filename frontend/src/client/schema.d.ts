@@ -146,6 +146,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/timeseries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Timeseries */
+        get: operations["timeseries_api_timeseries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -297,6 +314,16 @@ export interface components {
             total_generation_mw: number | null;
             /** Transmission Demand Mw */
             transmission_demand_mw: number;
+        };
+        /** TimeseriesPoint */
+        TimeseriesPoint: {
+            /**
+             * Bucket
+             * Format: date-time
+             */
+            bucket: string;
+            /** Value */
+            value: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -517,6 +544,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SupplyDemandPoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    timeseries_api_timeseries_get: {
+        parameters: {
+            query: {
+                metric: "demand" | "generation" | "carbon" | "price";
+                granularity?: "sp" | "hour" | "day";
+                /** @description Window in hours (max 30 days). */
+                hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeseriesPoint"][];
                 };
             };
             /** @description Validation Error */
