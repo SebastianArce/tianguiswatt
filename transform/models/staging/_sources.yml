@@ -8,3 +8,5 @@ sources:
       - name: generation_fuelinst
       - name: demand
       - name: carbon_intensity_national
+      - name: system_price
+      - name: market_index_price

@@ -28,3 +28,13 @@ models:
         tests: [not_null]
       - name: intensity_gco2
         tests: [not_null]
+
+  - name: mart_prices
+    description: System (imbalance) price + APX/N2EX Market Index Prices per settlement period.
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: system_sell_price
+        tests: [not_null]

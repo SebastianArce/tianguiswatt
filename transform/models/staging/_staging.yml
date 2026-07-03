@@ -30,3 +30,23 @@ models:
         tests: [not_null]
       - name: intensity_index
         tests: [not_null]
+
+  - name: stg_system_price
+    description: Deduplicated system (imbalance) price per settlement period.
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: system_sell_price
+        tests: [not_null]
+
+  - name: stg_market_index_price
+    description: Deduplicated Market Index Price per settlement period and provider.
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: data_provider
+        tests: [not_null]
