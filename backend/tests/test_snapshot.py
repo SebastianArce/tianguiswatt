@@ -29,6 +29,10 @@ def test_snapshot_returns_latest_across_domains(ch_client):
     assert data["carbon"]["intensity_gco2"] == 225
     assert data["carbon"]["intensity_index"] == "high"
 
+    assert data["price"]["settlement_period"] == 42
+    assert data["price"]["system_price"] == 95.0
+    assert data["price"]["apx_price"] == 101.14
+
 
 def test_snapshot_empty_when_marts_absent(empty_ch):
     # fresh deploy / warming up: marts don't exist yet -> 200 with empty payload, not 500
@@ -43,4 +47,5 @@ def test_snapshot_empty_when_marts_absent(empty_ch):
     assert data["generation"] == []
     assert data["supply_demand"] is None
     assert data["carbon"] is None
+    assert data["price"] is None
     assert data["measured_at"] is None

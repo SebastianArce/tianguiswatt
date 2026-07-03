@@ -10,7 +10,7 @@ from __future__ import annotations
 from clickhouse_connect.driver.client import Client
 
 from app.queries.util import query_rows
-from app.schemas import CarbonPoint, GenerationPoint, SupplyDemandPoint
+from app.schemas import CarbonPoint, GenerationPoint, PricePoint, SupplyDemandPoint
 
 
 def fetch_generation(client: Client, hours: int) -> list[GenerationPoint]:
@@ -73,4 +73,31 @@ def fetch_carbon(client: Client, hours: int) -> list[CarbonPoint]:
             intensity_index=ix,
         )
         for f, fc, ac, i, ix in rows
+    ]
+
+
+def fetch_prices(client: Client, hours: int) -> list[PricePoint]:
+    rows = query_rows(
+        client,
+        "WITH base AS ("
+        "  SELECT toDateTime(settlement_date) + (settlement_period - 1) * 1800 AS period_start, "
+        "    settlement_period, system_sell_price, net_imbalance_volume, apx_price, n2ex_price "
+        "  FROM mart_prices) "
+        "SELECT period_start, settlement_period, system_sell_price, net_imbalance_volume, "
+        "  apx_price, n2ex_price "
+        "FROM base "
+        "WHERE period_start >= (SELECT max(period_start) FROM base) - INTERVAL {hours:UInt32} HOUR "
+        "ORDER BY period_start",
+        {"hours": hours},
+    )
+    return [
+        PricePoint(
+            period_start=p,
+            settlement_period=sp,
+            system_price=ssp,
+            net_imbalance_volume=niv,
+            apx_price=apx,
+            n2ex_price=n2ex,
+        )
+        for p, sp, ssp, niv, apx, n2ex in rows
     ]
