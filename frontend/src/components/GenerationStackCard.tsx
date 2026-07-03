@@ -1,5 +1,5 @@
 import type { EChartsOption } from 'echarts'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useGenerationHistory } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
 import { FUEL_GROUPS, fuelGroup } from '@/lib/theme'
@@ -32,37 +32,31 @@ export function GenerationStackCard() {
     })
   }, [data])
 
-  const [sel, setSel] = useState<number | null>(null)
-  const selected = sel == null ? hours.length - 1 : Math.min(sel, hours.length - 1)
+  // Only show families that actually appear in the window (e.g. no solar overnight).
+  const present = useMemo(
+    () => FUEL_GROUPS.filter((g) => hours.some((h) => (h.gw[g.key] ?? 0) > 0.05)),
+    [hours],
+  )
 
   const option = useMemo<EChartsOption>(() => {
-    const labels = hours.map((h) => h.label)
-    const selLabel = labels[selected]
-    const series = FUEL_GROUPS.map((g, idx) => ({
+    const series = FUEL_GROUPS.map((g) => ({
       name: g.key,
       type: 'bar' as const,
       stack: 'gen',
       data: hours.map((h) => +h.gw[g.key].toFixed(2)),
       itemStyle: { color: g.color },
-      ...(idx === 0 && selLabel
-        ? {
-            markLine: {
-              silent: true,
-              symbol: 'none' as const,
-              lineStyle: { color: '#f6f6f2', type: 'dashed' as const, width: 1 },
-              label: { show: false },
-              data: [{ xAxis: selLabel }],
-            },
-          }
-        : {}),
     }))
     return {
       textStyle: { fontFamily: "'IBM Plex Sans', sans-serif", color: AXIS_TEXT },
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        valueFormatter: (v) => (v ? `${v} GW` : '—'),
+      },
       grid: { left: 34, right: 12, top: 12, bottom: 24 },
       xAxis: {
         type: 'category',
-        data: labels,
+        data: hours.map((h) => h.label),
         axisLabel: { color: AXIS_TEXT, interval: 3 },
         axisLine: { lineStyle: { color: GRID_LINE } },
         axisTick: { show: false },
@@ -74,10 +68,9 @@ export function GenerationStackCard() {
       },
       series,
     }
-  }, [hours, selected])
+  }, [hours])
 
   const chartRef = useECharts(option)
-  const current = hours[selected]
 
   return (
     <section className="flex h-full flex-col rounded-[10px] border border-line bg-ink p-5 text-paper shadow-sm">
@@ -89,30 +82,18 @@ export function GenerationStackCard() {
       </div>
       <div ref={chartRef} className="min-h-[300px] w-full flex-1" />
       {hours.length > 0 ? (
-        <>
-          <input
-            type="range"
-            min={0}
-            max={hours.length - 1}
-            value={selected}
-            onChange={(e) => setSel(Number(e.target.value))}
-            className="mt-2 w-full accent-[#3f8d84]"
-            aria-label="Hour"
-          />
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-mono text-xs text-paper">{current?.label}</span>
-            {FUEL_GROUPS.filter((g) => (current?.gw[g.key] ?? 0) > 0.05).map((g) => (
-              <span
-                key={g.key}
-                className="flex items-center gap-1 font-mono text-[11px]"
-                style={{ color: '#b8c4c0' }}
-              >
-                <span className="h-2 w-2 rounded-sm" style={{ background: g.color }} />
-                {g.key} {current?.gw[g.key].toFixed(1)}
-              </span>
-            ))}
-          </div>
-        </>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {present.map((g) => (
+            <span
+              key={g.key}
+              className="flex items-center gap-1 font-mono text-[11px]"
+              style={{ color: '#b8c4c0' }}
+            >
+              <span className="h-2 w-2 rounded-sm" style={{ background: g.color }} />
+              {g.key}
+            </span>
+          ))}
+        </div>
       ) : (
         <p className="mt-2 text-center text-sm" style={{ color: AXIS_TEXT }}>
           Warming up — no generation history yet.
