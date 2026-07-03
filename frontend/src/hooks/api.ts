@@ -24,3 +24,16 @@ export function useSupplyDemandHistory(hours = 12) {
     },
   })
 }
+
+export function usePricesHistory(hours = 12) {
+  return useQuery({
+    queryKey: ['prices', hours],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/prices', {
+        params: { query: { hours } },
+      })
+      if (error) throw error
+      return data
+    },
+  })
+}
