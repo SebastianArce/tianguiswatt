@@ -132,3 +132,57 @@ def test_market_index_price_keeps_a_row_per_provider(client):
         "SELECT price FROM raw.market_index_price FINAL WHERE data_provider = 'APXMIDP'"
     ).result_rows
     assert apx == [(110.0,)]
+
+
+def test_migrate_creates_bid_offer_tables(client):
+    migrate(client)
+    for tbl in ("bid_offer", "bid_offer_acceptance"):
+        exists = client.query(
+            f"SELECT count() FROM system.tables WHERE database='raw' AND name='{tbl}'"
+        ).result_rows[0][0]
+        assert exists == 1, f"raw.{tbl} not created"
+
+
+def test_bid_offer_dedups_by_pair(client):
+    migrate(client)
+    cols = [
+        "settlement_date",
+        "settlement_period",
+        "bm_unit",
+        "pair_id",
+        "time_from",
+        "time_to",
+        "level_from",
+        "level_to",
+        "bid",
+        "offer",
+        "national_grid_bm_unit",
+        "ingest_version",
+    ]
+    d, t1, t2 = (
+        dt.date(2026, 7, 2),
+        dt.datetime(2026, 7, 2, 9, 30),
+        dt.datetime(2026, 7, 2, 10, 0),
+    )
+    client.insert(
+        "raw.bid_offer",
+        [
+            [d, 22, "E_ABERDARE", -1, t1, t2, -16, -16, 115.0, 220.0, "ABERU-1", 1],
+            [d, 22, "E_ABERDARE", 1, t1, t2, 0, 50, 130.0, 260.0, "ABERU-1", 1],
+        ],
+        column_names=cols,
+    )
+    assert (
+        client.query("SELECT count() FROM raw.bid_offer FINAL").result_rows[0][0] == 2
+    )
+
+    # A revised pair (same key, higher version) supersedes only its own row.
+    client.insert(
+        "raw.bid_offer",
+        [[d, 22, "E_ABERDARE", -1, t1, t2, -16, -16, 120.0, 230.0, "ABERU-1", 2]],
+        column_names=cols,
+    )
+    offer = client.query(
+        "SELECT offer FROM raw.bid_offer FINAL WHERE pair_id = -1"
+    ).result_rows
+    assert offer == [(230.0,)]
