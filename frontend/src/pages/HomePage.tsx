@@ -1,5 +1,8 @@
+import { AcceptedActions } from '@/components/AcceptedActions'
+import { BalancingPanel } from '@/components/BalancingPanel'
 import { CarbonCard } from '@/components/CarbonCard'
-import { GenerationMixCard } from '@/components/GenerationMixCard'
+import { GenerationStackCard } from '@/components/GenerationStackCard'
+import { InterconnectorFlows } from '@/components/InterconnectorFlows'
 import { PricesCard } from '@/components/PricesCard'
 import { StatTicker } from '@/components/StatTicker'
 import { SupplyDemandCard } from '@/components/SupplyDemandCard'
@@ -23,8 +26,18 @@ export function HomePage() {
 
       <StatTicker />
 
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <GenerationStackCard />
+        </div>
+        <div className="flex flex-col gap-4">
+          <InterconnectorFlows />
+          <BalancingPanel />
+          <AcceptedActions />
+        </div>
+      </div>
+
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <GenerationMixCard />
         <SupplyDemandCard />
         <CarbonCard />
         <PricesCard />

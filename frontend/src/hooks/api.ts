@@ -49,6 +49,30 @@ export function useBidStack() {
   })
 }
 
+export function useGenerationHistory(hours = 24) {
+  return useQuery({
+    queryKey: ['generation', hours],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/generation', {
+        params: { query: { hours } },
+      })
+      if (error) throw error
+      return data
+    },
+  })
+}
+
+export function useAcceptedActions() {
+  return useQuery({
+    queryKey: ['accepted-actions'],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/accepted-actions')
+      if (error) throw error
+      return data
+    },
+  })
+}
+
 export function useTimeseries(
   metric: 'demand' | 'generation' | 'carbon' | 'price',
   granularity: 'sp' | 'hour' | 'day',
