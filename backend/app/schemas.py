@@ -91,3 +91,8 @@ class BidStack(BaseModel):
 
     settlement_period: int | None
     entries: list[BidStackEntry]
+
+
+class TimeseriesPoint(BaseModel):
+    bucket: dt.datetime
+    value: float

@@ -462,6 +462,25 @@
         "title": "SupplyDemandPoint",
         "type": "object"
       },
+      "TimeseriesPoint": {
+        "properties": {
+          "bucket": {
+            "format": "date-time",
+            "title": "Bucket",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "bucket",
+          "value"
+        ],
+        "title": "TimeseriesPoint",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -776,6 +795,84 @@
           }
         },
         "summary": "Supply Demand"
+      }
+    },
+    "/api/timeseries": {
+      "get": {
+        "operationId": "timeseries_api_timeseries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "enum": [
+                "demand",
+                "generation",
+                "carbon",
+                "price"
+              ],
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "granularity",
+            "required": false,
+            "schema": {
+              "default": "hour",
+              "enum": [
+                "sp",
+                "hour",
+                "day"
+              ],
+              "title": "Granularity",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Window in hours (max 30 days).",
+            "in": "query",
+            "name": "hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "description": "Window in hours (max 30 days).",
+              "maximum": 720,
+              "minimum": 1,
+              "title": "Hours",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TimeseriesPoint"
+                  },
+                  "title": "Response Timeseries Api Timeseries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Timeseries"
       }
     }
   }

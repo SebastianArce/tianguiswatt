@@ -25,6 +25,7 @@ _MART_TABLES = (
     "mart_carbon",
     "mart_prices",
     "mart_bid_stack",
+    "mart_metrics",
 )
 
 
@@ -189,6 +190,29 @@ def _seed(ch: Client) -> None:
             "is_offer",
             "accepted",
         ],
+    )
+    ch.command(
+        "CREATE TABLE mart_metrics "
+        "(metric String, granularity String, bucket DateTime, value Float64) "
+        "ENGINE = MergeTree ORDER BY (metric, granularity, bucket)"
+    )
+    ch.insert(
+        "mart_metrics",
+        [
+            # demand/hour: latest bucket 20:00; the 06-25 row is outside a 24h window
+            ["demand", "hour", dt.datetime(2026, 6, 30, 18, 0), 22000.0],
+            ["demand", "hour", dt.datetime(2026, 6, 30, 19, 0), 21000.0],
+            ["demand", "hour", dt.datetime(2026, 6, 30, 20, 0), 20000.0],
+            ["demand", "hour", dt.datetime(2026, 6, 25, 12, 0), 99999.0],
+            [
+                "demand",
+                "day",
+                dt.datetime(2026, 6, 30, 0, 0),
+                21000.0,
+            ],  # other granularity
+            ["price", "hour", dt.datetime(2026, 6, 30, 20, 0), 100.0],  # other metric
+        ],
+        column_names=["metric", "granularity", "bucket", "value"],
     )
 
 
