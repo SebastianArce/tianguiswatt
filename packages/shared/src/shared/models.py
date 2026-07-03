@@ -99,7 +99,7 @@ class BidOfferRecord(BaseModel):
 
     settlement_date: dt.date = Field(alias="settlementDate")
     settlement_period: int = Field(alias="settlementPeriod")
-    bm_unit: str = Field(alias="bmUnit")
+    bm_unit: str | None = Field(default=None, alias="bmUnit")
     pair_id: int = Field(alias="pairId")
     time_from: dt.datetime = Field(alias="timeFrom")
     time_to: dt.datetime = Field(alias="timeTo")
@@ -120,7 +120,7 @@ class BidOfferAcceptanceRecord(BaseModel):
     settlement_date: dt.date = Field(alias="settlementDate")
     settlement_period_from: int = Field(alias="settlementPeriodFrom")
     settlement_period_to: int = Field(alias="settlementPeriodTo")
-    bm_unit: str = Field(alias="bmUnit")
+    bm_unit: str | None = Field(default=None, alias="bmUnit")
     acceptance_number: int = Field(alias="acceptanceNumber")
     acceptance_time: dt.datetime = Field(alias="acceptanceTime")
     time_from: dt.datetime = Field(alias="timeFrom")

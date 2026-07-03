@@ -10,6 +10,8 @@ from dagster import AssetExecutionContext, MaterializeResult, asset
 
 from shared.clickhouse import get_client
 from shared.models import (
+    BidOfferAcceptanceRecord,
+    BidOfferRecord,
     CarbonIntensityRecord,
     DemandRecord,
     FuelInstRecord,
@@ -18,10 +20,14 @@ from shared.models import (
 )
 from orchestrator.carbon import fetch_carbon_intensity, parse_carbon_intensity
 from orchestrator.elexon import (
+    fetch_bid_offer,
+    fetch_bid_offer_acceptances,
     fetch_demand,
     fetch_fuelinst,
     fetch_market_index_price,
     fetch_system_prices,
+    parse_bid_offer,
+    parse_bid_offer_acceptances,
     parse_demand,
     parse_fuelinst,
     parse_market_index_price,
@@ -78,6 +84,40 @@ MID_COLUMNS = [
     "data_provider",
     "price",
     "volume",
+    "ingest_version",
+]
+
+BID_OFFER_TABLE = "raw.bid_offer"
+BID_OFFER_COLUMNS = [
+    "settlement_date",
+    "settlement_period",
+    "bm_unit",
+    "pair_id",
+    "time_from",
+    "time_to",
+    "level_from",
+    "level_to",
+    "bid",
+    "offer",
+    "national_grid_bm_unit",
+    "ingest_version",
+]
+
+BOALF_TABLE = "raw.bid_offer_acceptance"
+BOALF_COLUMNS = [
+    "settlement_date",
+    "settlement_period_from",
+    "settlement_period_to",
+    "bm_unit",
+    "acceptance_number",
+    "acceptance_time",
+    "time_from",
+    "time_to",
+    "level_from",
+    "level_to",
+    "so_flag",
+    "stor_flag",
+    "national_grid_bm_unit",
     "ingest_version",
 ]
 
@@ -185,6 +225,58 @@ def load_market_index_price(
     return len(rows)
 
 
+def load_bid_offer(
+    client: Client, records: list[BidOfferRecord], ingest_version: int
+) -> int:
+    """Insert bid-offer records tagged with an ingest version."""
+    rows = [
+        [
+            r.settlement_date,
+            r.settlement_period,
+            r.bm_unit,
+            r.pair_id,
+            r.time_from,
+            r.time_to,
+            r.level_from,
+            r.level_to,
+            r.bid,
+            r.offer,
+            r.national_grid_bm_unit,
+            ingest_version,
+        ]
+        for r in records
+    ]
+    client.insert(BID_OFFER_TABLE, rows, column_names=BID_OFFER_COLUMNS)
+    return len(rows)
+
+
+def load_bid_offer_acceptances(
+    client: Client, records: list[BidOfferAcceptanceRecord], ingest_version: int
+) -> int:
+    """Insert bid-offer acceptance records tagged with an ingest version."""
+    rows = [
+        [
+            r.settlement_date,
+            r.settlement_period_from,
+            r.settlement_period_to,
+            r.bm_unit,
+            r.acceptance_number,
+            r.acceptance_time,
+            r.time_from,
+            r.time_to,
+            r.level_from,
+            r.level_to,
+            r.so_flag,
+            r.stor_flag,
+            r.national_grid_bm_unit,
+            ingest_version,
+        ]
+        for r in records
+    ]
+    client.insert(BOALF_TABLE, rows, column_names=BOALF_COLUMNS)
+    return len(rows)
+
+
 @asset(description="Instantaneous GB generation by fuel type (Elexon FUELINST).")
 def generation_fuelinst(context: AssetExecutionContext) -> MaterializeResult:
     """Fetch FUELINST, validate, and load into ClickHouse raw."""
@@ -267,4 +359,48 @@ def market_index_price(context: AssetExecutionContext) -> MaterializeResult:
     finally:
         client.close()
     context.log.info(f"Ingested {rows} MID rows (ingest_version={ingest_version})")
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+# BOD is high-volume (~8k rows per settlement period) and the API caps the query range at
+# 1 hour, so we ingest a recent rolling window (current + previous SP); ReplacingMergeTree
+# dedupes the overlap by ingest_version.
+_BM_WINDOW = dt.timedelta(minutes=55)
+
+
+@asset(description="Balancing Mechanism bid-offer pairs, recent window (Elexon BOD).")
+def bid_offer(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch the last few hours of BOD, validate, and load into ClickHouse raw."""
+    now = dt.datetime.now(tz=dt.UTC)
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    records = parse_bid_offer(
+        fetch_bid_offer((now - _BM_WINDOW).strftime(fmt), now.strftime(fmt))
+    )
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_bid_offer(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(f"Ingested {rows} BOD rows (ingest_version={ingest_version})")
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+@asset(
+    description="Accepted Balancing Mechanism actions, recent window (Elexon BOALF)."
+)
+def bid_offer_acceptance(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch the last few hours of BOALF, validate, and load into ClickHouse raw."""
+    now = dt.datetime.now(tz=dt.UTC)
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    records = parse_bid_offer_acceptances(
+        fetch_bid_offer_acceptances((now - _BM_WINDOW).strftime(fmt), now.strftime(fmt))
+    )
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_bid_offer_acceptances(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(f"Ingested {rows} BOALF rows (ingest_version={ingest_version})")
     return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
