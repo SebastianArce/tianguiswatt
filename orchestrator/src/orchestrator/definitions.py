@@ -9,6 +9,7 @@ from orchestrator.assets import (
     demand,
     generation_fuelinst,
     market_index_price,
+    system_frequency,
     system_price,
 )
 from orchestrator.schedules import pipeline_schedule
@@ -23,6 +24,7 @@ defs = Definitions(
         market_index_price,
         bid_offer,
         bid_offer_acceptance,
+        system_frequency,
         marts,
     ],
     schedules=[pipeline_schedule],

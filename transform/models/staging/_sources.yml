@@ -12,3 +12,4 @@ sources:
       - name: market_index_price
       - name: bid_offer
       - name: bid_offer_acceptance
+      - name: system_frequency

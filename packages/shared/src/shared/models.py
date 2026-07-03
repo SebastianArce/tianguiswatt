@@ -130,3 +130,12 @@ class BidOfferAcceptanceRecord(BaseModel):
     so_flag: bool = Field(alias="soFlag")
     stor_flag: bool = Field(alias="storFlag")
     national_grid_bm_unit: str = Field(alias="nationalGridBmUnit")
+
+
+class FrequencyRecord(BaseModel):
+    """One GB system-frequency reading (Elexon), ~15s resolution."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    measured_at: dt.datetime = Field(alias="measurementTime")
+    frequency_hz: float = Field(alias="frequency")

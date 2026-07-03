@@ -27,6 +27,7 @@ _MART_TABLES = (
     "mart_bid_stack",
     "mart_metrics",
     "mart_accepted_actions",
+    "mart_frequency",
 )
 
 
@@ -263,6 +264,18 @@ def _seed(ch: Client) -> None:
             "so_flag",
             "stor_flag",
         ],
+    )
+    ch.command(
+        "CREATE TABLE mart_frequency (measured_at DateTime, frequency_hz Float64) "
+        "ENGINE = MergeTree ORDER BY measured_at"
+    )
+    ch.insert(
+        "mart_frequency",
+        [
+            [dt.datetime(2026, 6, 30, 19, 59), 50.02],
+            [dt.datetime(2026, 6, 30, 20, 0), 49.97],  # latest
+        ],
+        column_names=["measured_at", "frequency_hz"],
     )
 
 

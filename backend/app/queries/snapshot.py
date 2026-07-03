@@ -74,10 +74,17 @@ def fetch_snapshot(client: Client) -> Snapshot:
         else None
     )
 
+    freq_rows = query_rows(
+        client,
+        "SELECT frequency_hz FROM mart_frequency ORDER BY measured_at DESC LIMIT 1",
+    )
+    frequency_hz = freq_rows[0][0] if freq_rows else None
+
     return Snapshot(
         measured_at=measured_at,
         generation=generation,
         supply_demand=supply_demand,
         carbon=carbon,
         price=price,
+        frequency_hz=frequency_hz,
     )

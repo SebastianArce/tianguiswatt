@@ -8,6 +8,7 @@ from shared.models import (
     BidOfferAcceptanceRecord,
     BidOfferRecord,
     DemandRecord,
+    FrequencyRecord,
     FuelInstRecord,
     MarketIndexPriceRecord,
     SystemPriceRecord,
@@ -19,6 +20,7 @@ FUELINST_URL = f"{ELEXON_BASE}/datasets/FUELINST"
 DEMAND_URL = f"{ELEXON_BASE}/demand/outturn"
 SYSTEM_PRICE_URL = f"{ELEXON_BASE}/balancing/settlement/system-prices"
 MID_URL = f"{ELEXON_BASE}/datasets/MID"
+FREQUENCY_URL = f"{ELEXON_BASE}/system/frequency"
 BOD_URL = f"{ELEXON_BASE}/datasets/BOD"
 BOALF_URL = f"{ELEXON_BASE}/datasets/BOALF"
 
@@ -162,3 +164,26 @@ def parse_bid_offer(payload: list[dict]) -> list[BidOfferRecord]:
 def parse_bid_offer_acceptances(payload: list[dict]) -> list[BidOfferAcceptanceRecord]:
     """Validate raw BOALF rows into typed records."""
     return [BidOfferAcceptanceRecord.model_validate(row) for row in payload]
+
+
+@retrying
+def fetch_frequency(
+    from_iso: str, to_iso: str, client: httpx.Client | None = None
+) -> list[dict]:
+    """Fetch GB system-frequency readings for an ISO datetime range."""
+    owns_client = client is None
+    client = client or httpx.Client(timeout=30)
+    try:
+        response = client.get(
+            FREQUENCY_URL, params={"from": from_iso, "to": to_iso, "format": "json"}
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+    finally:
+        if owns_client:
+            client.close()
+
+
+def parse_frequency(payload: list[dict]) -> list[FrequencyRecord]:
+    """Validate raw system-frequency rows into typed records."""
+    return [FrequencyRecord.model_validate(row) for row in payload]

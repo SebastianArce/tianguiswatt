@@ -25,6 +25,7 @@ const SNAPSHOT = {
     apx_price: 101.14,
     n2ex_price: 0,
   },
+  frequency_hz: 49.97,
 }
 
 const PRICES = [
@@ -147,6 +148,8 @@ test('home renders live data from the API', async ({ page }) => {
 
   // control-room ticker + prices (folded-in #52)
   await expect(page.getByText('System price')).toBeVisible()
+  await expect(page.getByText('Frequency')).toBeVisible()
+  await expect(page.getByText('49.97')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Wholesale price' })).toBeVisible()
 })
 

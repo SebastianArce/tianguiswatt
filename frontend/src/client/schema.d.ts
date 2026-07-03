@@ -319,6 +319,8 @@ export interface components {
          */
         Snapshot: {
             carbon: components["schemas"]["Carbon"] | null;
+            /** Frequency Hz */
+            frequency_hz: number | null;
             /** Generation */
             generation: components["schemas"]["GenerationMixItem"][];
             /** Measured At */

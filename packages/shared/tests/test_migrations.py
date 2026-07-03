@@ -143,6 +143,19 @@ def test_migrate_creates_bid_offer_tables(client):
         assert exists == 1, f"raw.{tbl} not created"
 
 
+def test_system_frequency_dedups_by_measurement(client):
+    migrate(client)
+    cols = ["measured_at", "frequency_hz", "ingest_version"]
+    at = dt.datetime(2026, 7, 3, 17, 35, 45)
+    client.insert("raw.system_frequency", [[at, 49.9, 1]], column_names=cols)
+    # a revised reading at the same time supersedes by version
+    client.insert("raw.system_frequency", [[at, 50.01, 2]], column_names=cols)
+    rows = client.query(
+        "SELECT frequency_hz FROM raw.system_frequency FINAL"
+    ).result_rows
+    assert rows == [(50.01,)]
+
+
 def test_bid_offer_dedups_by_pair(client):
     migrate(client)
     cols = [
