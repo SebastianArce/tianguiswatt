@@ -9,13 +9,23 @@ from clickhouse_connect.driver.client import Client
 from dagster import AssetExecutionContext, MaterializeResult, asset
 
 from shared.clickhouse import get_client
-from shared.models import CarbonIntensityRecord, DemandRecord, FuelInstRecord
+from shared.models import (
+    CarbonIntensityRecord,
+    DemandRecord,
+    FuelInstRecord,
+    MarketIndexPriceRecord,
+    SystemPriceRecord,
+)
 from orchestrator.carbon import fetch_carbon_intensity, parse_carbon_intensity
 from orchestrator.elexon import (
     fetch_demand,
     fetch_fuelinst,
+    fetch_market_index_price,
+    fetch_system_prices,
     parse_demand,
     parse_fuelinst,
+    parse_market_index_price,
+    parse_system_prices,
 )
 
 FUELINST_TABLE = "raw.generation_fuelinst"
@@ -45,6 +55,29 @@ CARBON_COLUMNS = [
     "forecast_gco2",
     "actual_gco2",
     "intensity_index",
+    "ingest_version",
+]
+
+SYSTEM_PRICE_TABLE = "raw.system_price"
+SYSTEM_PRICE_COLUMNS = [
+    "settlement_date",
+    "settlement_period",
+    "measured_at",
+    "system_sell_price",
+    "system_buy_price",
+    "net_imbalance_volume",
+    "price_derivation_code",
+    "ingest_version",
+]
+
+MID_TABLE = "raw.market_index_price"
+MID_COLUMNS = [
+    "settlement_date",
+    "settlement_period",
+    "measured_at",
+    "data_provider",
+    "price",
+    "volume",
     "ingest_version",
 ]
 
@@ -111,6 +144,47 @@ def load_carbon_intensity(
     return len(rows)
 
 
+def load_system_prices(
+    client: Client, records: list[SystemPriceRecord], ingest_version: int
+) -> int:
+    """Insert system-price records tagged with an ingest version."""
+    rows = [
+        [
+            r.settlement_date,
+            r.settlement_period,
+            r.measured_at,
+            r.system_sell_price,
+            r.system_buy_price,
+            r.net_imbalance_volume,
+            r.price_derivation_code,
+            ingest_version,
+        ]
+        for r in records
+    ]
+    client.insert(SYSTEM_PRICE_TABLE, rows, column_names=SYSTEM_PRICE_COLUMNS)
+    return len(rows)
+
+
+def load_market_index_price(
+    client: Client, records: list[MarketIndexPriceRecord], ingest_version: int
+) -> int:
+    """Insert Market Index Price records tagged with an ingest version."""
+    rows = [
+        [
+            r.settlement_date,
+            r.settlement_period,
+            r.measured_at,
+            r.data_provider,
+            r.price,
+            r.volume,
+            ingest_version,
+        ]
+        for r in records
+    ]
+    client.insert(MID_TABLE, rows, column_names=MID_COLUMNS)
+    return len(rows)
+
+
 @asset(description="Instantaneous GB generation by fuel type (Elexon FUELINST).")
 def generation_fuelinst(context: AssetExecutionContext) -> MaterializeResult:
     """Fetch FUELINST, validate, and load into ClickHouse raw."""
@@ -153,4 +227,44 @@ def carbon_intensity_national(context: AssetExecutionContext) -> MaterializeResu
     finally:
         client.close()
     context.log.info(f"Ingested {rows} carbon rows (ingest_version={ingest_version})")
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+@asset(
+    description="GB system (imbalance/cash-out) price per settlement period (Elexon)."
+)
+def system_price(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch today's system prices, validate, and load into ClickHouse raw."""
+    today = dt.datetime.now(tz=dt.UTC).date().isoformat()
+    records = parse_system_prices(fetch_system_prices(today))
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_system_prices(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(
+        f"Ingested {rows} system-price rows (ingest_version={ingest_version})"
+    )
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+@asset(
+    description="Market Index Price (APX/N2EX reference) per settlement period (Elexon)."
+)
+def market_index_price(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch today's Market Index Price rows, validate, and load into ClickHouse raw."""
+    now = dt.datetime.now(tz=dt.UTC)
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    records = parse_market_index_price(
+        fetch_market_index_price(start.strftime(fmt), now.strftime(fmt))
+    )
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_market_index_price(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(f"Ingested {rows} MID rows (ingest_version={ingest_version})")
     return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
