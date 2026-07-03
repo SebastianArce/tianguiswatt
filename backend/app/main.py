@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import events, health, history, snapshot
+from app.api import bid_stack, events, health, history, snapshot
 from app.core.config import settings
 from app.core.events import EventHub
 from app.queries.util import query_rows
@@ -50,4 +50,5 @@ if settings.backend_cors_origins:
 app.include_router(health.router, prefix="/api")
 app.include_router(snapshot.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
+app.include_router(bid_stack.router, prefix="/api")
 app.include_router(events.router, prefix="/api")

@@ -77,3 +77,17 @@ class PricePoint(BaseModel):
     net_imbalance_volume: float
     apx_price: float | None
     n2ex_price: float | None
+
+
+class BidStackEntry(BaseModel):
+    national_grid_bm_unit: str
+    offer_price: float  # cheapest offer £/MWh for the unit
+    volume_mw: float  # offerable band (max offer level − min offer level)
+    accepted: bool  # NESO accepted an action for this unit in the period
+
+
+class BidStack(BaseModel):
+    """The balancing-mechanism offer stack for the latest settlement period, cheapest first."""
+
+    settlement_period: int | None
+    entries: list[BidStackEntry]

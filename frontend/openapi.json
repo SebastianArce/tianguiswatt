@@ -1,6 +1,63 @@
 {
   "components": {
     "schemas": {
+      "BidStack": {
+        "description": "The balancing-mechanism offer stack for the latest settlement period, cheapest first.",
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/BidStackEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "settlement_period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Period"
+          }
+        },
+        "required": [
+          "settlement_period",
+          "entries"
+        ],
+        "title": "BidStack",
+        "type": "object"
+      },
+      "BidStackEntry": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "national_grid_bm_unit": {
+            "title": "National Grid Bm Unit",
+            "type": "string"
+          },
+          "offer_price": {
+            "title": "Offer Price",
+            "type": "number"
+          },
+          "volume_mw": {
+            "title": "Volume Mw",
+            "type": "number"
+          }
+        },
+        "required": [
+          "national_grid_bm_unit",
+          "offer_price",
+          "volume_mw",
+          "accepted"
+        ],
+        "title": "BidStackEntry",
+        "type": "object"
+      },
       "Carbon": {
         "properties": {
           "from_ts": {
@@ -453,6 +510,24 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/bid-stack": {
+      "get": {
+        "operationId": "bid_stack_api_bid_stack_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidStack"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Bid Stack"
+      }
+    },
     "/api/carbon": {
       "get": {
         "operationId": "carbon_api_carbon_get",

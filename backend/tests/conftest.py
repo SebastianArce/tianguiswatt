@@ -24,6 +24,7 @@ _MART_TABLES = (
     "mart_supply_demand",
     "mart_carbon",
     "mart_prices",
+    "mart_bid_stack",
 )
 
 
@@ -130,6 +131,63 @@ def _seed(ch: Client) -> None:
             "apx_volume",
             "n2ex_price",
             "n2ex_volume",
+        ],
+    )
+    ch.command(
+        "CREATE TABLE mart_bid_stack "
+        "(settlement_date Date, settlement_period UInt8, national_grid_bm_unit String, "
+        "bm_unit Nullable(String), pair_id Int16, bid Float64, offer Float64, "
+        "level_from Int32, level_to Int32, is_offer Bool, accepted Bool) "
+        "ENGINE = MergeTree ORDER BY (settlement_date, settlement_period)"
+    )
+    d = dt.date(2026, 6, 30)
+    ch.insert(
+        "mart_bid_stack",
+        [
+            # latest period 42: AAA (cheap, accepted, 10 MW band), BBB (dearer, 20 MW band)
+            [d, 42, "AAA-1", "T_AAA-1", 1, 40.0, 60.0, 0, 0, True, True],
+            [d, 42, "AAA-1", "T_AAA-1", 2, 60.0, 80.0, 10, 10, True, True],
+            [
+                d,
+                42,
+                "AAA-1",
+                "T_AAA-1",
+                -1,
+                30.0,
+                50.0,
+                -5,
+                -5,
+                False,
+                True,
+            ],  # a bid: excluded
+            [d, 42, "BBB-1", "T_BBB-1", 1, 90.0, 100.0, 0, 0, True, False],
+            [d, 42, "BBB-1", "T_BBB-1", 2, 110.0, 120.0, 20, 20, True, False],
+            [
+                d,
+                30,
+                "AAA-1",
+                "T_AAA-1",
+                1,
+                40.0,
+                55.0,
+                0,
+                8,
+                True,
+                False,
+            ],  # older period
+        ],
+        column_names=[
+            "settlement_date",
+            "settlement_period",
+            "national_grid_bm_unit",
+            "bm_unit",
+            "pair_id",
+            "bid",
+            "offer",
+            "level_from",
+            "level_to",
+            "is_offer",
+            "accepted",
         ],
     )
 
