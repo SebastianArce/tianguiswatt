@@ -56,3 +56,35 @@ class CarbonIntensityRecord(BaseModel):
         default=None, validation_alias=AliasPath("intensity", "actual")
     )
     intensity_index: str = Field(validation_alias=AliasPath("intensity", "index"))
+
+
+class SystemPriceRecord(BaseModel):
+    """One Elexon system (imbalance / cash-out) price for a settlement period.
+
+    Since EBSCR (2015) GB uses a single imbalance price, so sell and buy are equal; we keep
+    both for fidelity, plus the net imbalance volume and the price derivation code.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    settlement_date: dt.date = Field(alias="settlementDate")
+    settlement_period: int = Field(alias="settlementPeriod")
+    measured_at: dt.datetime = Field(alias="startTime")
+    system_sell_price: float = Field(alias="systemSellPrice")
+    system_buy_price: float = Field(alias="systemBuyPrice")
+    net_imbalance_volume: float = Field(alias="netImbalanceVolume")
+    price_derivation_code: str = Field(alias="priceDerivationCode")
+
+
+class MarketIndexPriceRecord(BaseModel):
+    """One Market Index Price reference row — a volume-weighted price per data provider
+    (APX, N2EX) per settlement period, so the provider is part of the natural key."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    settlement_date: dt.date = Field(alias="settlementDate")
+    settlement_period: int = Field(alias="settlementPeriod")
+    measured_at: dt.datetime = Field(alias="startTime")
+    data_provider: str = Field(alias="dataProvider")
+    price: float
+    volume: float
