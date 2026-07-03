@@ -38,3 +38,13 @@ models:
         tests: [not_null]
       - name: system_sell_price
         tests: [not_null]
+
+  - name: mart_bid_stack
+    description: BM bid-offer ladder per settlement period, flagged with accepted actions.
+    columns:
+      - name: settlement_period
+        tests: [not_null]
+      - name: national_grid_bm_unit
+        tests: [not_null]
+      - name: pair_id
+        tests: [not_null]

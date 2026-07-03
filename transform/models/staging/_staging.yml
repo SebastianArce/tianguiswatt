@@ -50,3 +50,21 @@ models:
         tests: [not_null]
       - name: data_provider
         tests: [not_null]
+
+  - name: stg_bid_offer
+    description: Deduplicated BM bid-offer pairs per settlement period, unit and pairId.
+    columns:
+      - name: national_grid_bm_unit
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: pair_id
+        tests: [not_null]
+
+  - name: stg_bid_offer_acceptance
+    description: Deduplicated BM bid-offer acceptances, keyed by acceptance number.
+    columns:
+      - name: acceptance_number
+        tests: [not_null]
+      - name: national_grid_bm_unit
+        tests: [not_null]
