@@ -80,14 +80,14 @@ export function GenerationStackCard() {
   const current = hours[selected]
 
   return (
-    <section className="rounded-[10px] border border-line bg-ink p-5 text-paper shadow-sm">
+    <section className="flex h-full flex-col rounded-[10px] border border-line bg-ink p-5 text-paper shadow-sm">
       <div className="mb-2 flex items-baseline justify-between">
         <h2 className="font-display text-lg text-paper">Generation mix</h2>
         <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: AXIS_TEXT }}>
           24h · GW by technology
         </span>
       </div>
-      <div ref={chartRef} className="h-[320px] w-full" />
+      <div ref={chartRef} className="min-h-[300px] w-full flex-1" />
       {hours.length > 0 ? (
         <>
           <input

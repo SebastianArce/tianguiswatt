@@ -18,8 +18,12 @@ export function useECharts(option: echarts.EChartsOption) {
     chartRef.current = chart
     const handleResize = () => chart.resize()
     window.addEventListener('resize', handleResize)
+    // keep the chart in sync with its container (e.g. a flex-grown height)
+    const observer = new ResizeObserver(handleResize)
+    observer.observe(containerRef.current)
     return () => {
       window.removeEventListener('resize', handleResize)
+      observer.disconnect()
       chart.dispose()
     }
   }, [])
