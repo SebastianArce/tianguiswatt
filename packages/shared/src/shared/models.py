@@ -139,3 +139,16 @@ class FrequencyRecord(BaseModel):
 
     measured_at: dt.datetime = Field(alias="measurementTime")
     frequency_hz: float = Field(alias="frequency")
+
+
+class BmuRegistryRecord(BaseModel):
+    """One Balancing Mechanism Unit in the Elexon reference registry: the mapping from a
+    unit id to its human-readable name, fuel type, and lead party."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    elexon_bm_unit: str | None = Field(default=None, alias="elexonBmUnit")
+    national_grid_bm_unit: str | None = Field(default=None, alias="nationalGridBmUnit")
+    bm_unit_name: str | None = Field(default=None, alias="bmUnitName")
+    fuel_type: str | None = Field(default=None, alias="fuelType")
+    lead_party_name: str | None = Field(default=None, alias="leadPartyName")

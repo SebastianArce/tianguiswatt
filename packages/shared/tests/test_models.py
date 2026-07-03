@@ -7,6 +7,7 @@ import datetime as dt
 from shared.models import (
     BidOfferAcceptanceRecord,
     BidOfferRecord,
+    BmuRegistryRecord,
     FrequencyRecord,
     MarketIndexPriceRecord,
     SystemPriceRecord,
@@ -108,3 +109,19 @@ def test_frequency_record_parses_api_shape():
     )
     assert r.frequency_hz == 49.9
     assert r.measured_at == dt.datetime(2026, 7, 3, 17, 35, 45, tzinfo=dt.UTC)
+
+
+def test_bmu_registry_record_parses_api_shape():
+    r = BmuRegistryRecord.model_validate(
+        {
+            "nationalGridBmUnit": "PEMB-11",
+            "elexonBmUnit": "T_PEMB-11",
+            "fuelType": "CCGT",
+            "bmUnitName": "Pembroke Unit 11",
+            "leadPartyName": "RWE Generation UK plc",
+            "generationCapacity": "475.000",  # extra fields ignored
+        }
+    )
+    assert r.national_grid_bm_unit == "PEMB-11"
+    assert r.bm_unit_name == "Pembroke Unit 11"
+    assert r.fuel_type == "CCGT"

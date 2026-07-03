@@ -5,6 +5,7 @@ from dagster import Definitions
 from orchestrator.assets import (
     bid_offer,
     bid_offer_acceptance,
+    bmu_registry,
     carbon_intensity_national,
     demand,
     generation_fuelinst,
@@ -25,6 +26,7 @@ defs = Definitions(
         bid_offer,
         bid_offer_acceptance,
         system_frequency,
+        bmu_registry,
         marts,
     ],
     schedules=[pipeline_schedule],

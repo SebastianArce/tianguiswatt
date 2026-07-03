@@ -104,6 +104,8 @@ class AcceptedAction(BaseModel):
 
     national_grid_bm_unit: str
     bm_unit: str | None
+    unit_name: str | None  # human-readable station/unit name from the registry
+    fuel_type: str | None  # registry fuel type (CCGT, WIND, …)
     acceptance_time: dt.datetime
     level_from: float
     level_to: float

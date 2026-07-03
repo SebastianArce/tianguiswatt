@@ -156,6 +156,31 @@ def test_system_frequency_dedups_by_measurement(client):
     assert rows == [(50.01,)]
 
 
+def test_bmu_registry_dedups_by_unit(client):
+    migrate(client)
+    cols = [
+        "elexon_bm_unit",
+        "national_grid_bm_unit",
+        "bm_unit_name",
+        "fuel_type",
+        "lead_party_name",
+        "ingest_version",
+    ]
+    client.insert(
+        "raw.bmu_registry",
+        [["T_PEMB-11", "PEMB-11", "Pembroke Unit 11", "CCGT", "RWE", 1]],
+        column_names=cols,
+    )
+    # a refreshed registry row supersedes by version
+    client.insert(
+        "raw.bmu_registry",
+        [["T_PEMB-11", "PEMB-11", "Pembroke GT 11", "CCGT", "RWE", 2]],
+        column_names=cols,
+    )
+    rows = client.query("SELECT bm_unit_name FROM raw.bmu_registry FINAL").result_rows
+    assert rows == [("Pembroke GT 11",)]
+
+
 def test_bid_offer_dedups_by_pair(client):
     migrate(client)
     cols = [

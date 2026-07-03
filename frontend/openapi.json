@@ -20,6 +20,17 @@
             ],
             "title": "Bm Unit"
           },
+          "fuel_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fuel Type"
+          },
           "level_from": {
             "title": "Level From",
             "type": "number"
@@ -35,11 +46,24 @@
           "so_flag": {
             "title": "So Flag",
             "type": "boolean"
+          },
+          "unit_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Name"
           }
         },
         "required": [
           "national_grid_bm_unit",
           "bm_unit",
+          "unit_name",
+          "fuel_type",
           "acceptance_time",
           "level_from",
           "level_to",

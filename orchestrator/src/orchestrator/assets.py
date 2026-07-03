@@ -12,6 +12,7 @@ from shared.clickhouse import get_client
 from shared.models import (
     BidOfferAcceptanceRecord,
     BidOfferRecord,
+    BmuRegistryRecord,
     CarbonIntensityRecord,
     DemandRecord,
     FrequencyRecord,
@@ -23,6 +24,7 @@ from orchestrator.carbon import fetch_carbon_intensity, parse_carbon_intensity
 from orchestrator.elexon import (
     fetch_bid_offer,
     fetch_bid_offer_acceptances,
+    fetch_bmu_registry,
     fetch_demand,
     fetch_frequency,
     fetch_fuelinst,
@@ -30,6 +32,7 @@ from orchestrator.elexon import (
     fetch_system_prices,
     parse_bid_offer,
     parse_bid_offer_acceptances,
+    parse_bmu_registry,
     parse_demand,
     parse_frequency,
     parse_fuelinst,
@@ -127,6 +130,16 @@ BOALF_COLUMNS = [
 
 FREQUENCY_TABLE = "raw.system_frequency"
 FREQUENCY_COLUMNS = ["measured_at", "frequency_hz", "ingest_version"]
+
+BMU_REGISTRY_TABLE = "raw.bmu_registry"
+BMU_REGISTRY_COLUMNS = [
+    "elexon_bm_unit",
+    "national_grid_bm_unit",
+    "bm_unit_name",
+    "fuel_type",
+    "lead_party_name",
+    "ingest_version",
+]
 
 
 def _ingest_version() -> int:
@@ -293,6 +306,25 @@ def load_frequency(
     return len(rows)
 
 
+def load_bmu_registry(
+    client: Client, records: list[BmuRegistryRecord], ingest_version: int
+) -> int:
+    """Insert BMU registry records tagged with an ingest version."""
+    rows = [
+        [
+            r.elexon_bm_unit or "",
+            r.national_grid_bm_unit or "",
+            r.bm_unit_name,
+            r.fuel_type,
+            r.lead_party_name,
+            ingest_version,
+        ]
+        for r in records
+    ]
+    client.insert(BMU_REGISTRY_TABLE, rows, column_names=BMU_REGISTRY_COLUMNS)
+    return len(rows)
+
+
 @asset(description="Instantaneous GB generation by fuel type (Elexon FUELINST).")
 def generation_fuelinst(context: AssetExecutionContext) -> MaterializeResult:
     """Fetch FUELINST, validate, and load into ClickHouse raw."""
@@ -437,5 +469,21 @@ def system_frequency(context: AssetExecutionContext) -> MaterializeResult:
         client.close()
     context.log.info(
         f"Ingested {rows} frequency rows (ingest_version={ingest_version})"
+    )
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+@asset(description="Balancing Mechanism Unit reference registry (Elexon).")
+def bmu_registry(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch the full BMU registry (unit → name/fuel/party) and load into ClickHouse raw."""
+    records = parse_bmu_registry(fetch_bmu_registry())
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_bmu_registry(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(
+        f"Ingested {rows} BMU registry rows (ingest_version={ingest_version})"
     )
     return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})

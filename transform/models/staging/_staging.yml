@@ -76,3 +76,9 @@ models:
         tests: [not_null]
       - name: frequency_hz
         tests: [not_null]
+
+  - name: stg_bmu_registry
+    description: BMU registry deduplicated to one row per National Grid BMU id.
+    columns:
+      - name: national_grid_bm_unit
+        tests: [not_null, unique]
