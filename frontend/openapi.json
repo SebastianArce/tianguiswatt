@@ -1,6 +1,53 @@
 {
   "components": {
     "schemas": {
+      "AcceptedAction": {
+        "description": "One accepted Balancing Mechanism action (BOALF); level_from \u2192 level_to is the ramp.",
+        "properties": {
+          "acceptance_time": {
+            "format": "date-time",
+            "title": "Acceptance Time",
+            "type": "string"
+          },
+          "bm_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bm Unit"
+          },
+          "level_from": {
+            "title": "Level From",
+            "type": "number"
+          },
+          "level_to": {
+            "title": "Level To",
+            "type": "number"
+          },
+          "national_grid_bm_unit": {
+            "title": "National Grid Bm Unit",
+            "type": "string"
+          },
+          "so_flag": {
+            "title": "So Flag",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "national_grid_bm_unit",
+          "bm_unit",
+          "acceptance_time",
+          "level_from",
+          "level_to",
+          "so_flag"
+        ],
+        "title": "AcceptedAction",
+        "type": "object"
+      },
       "BidStack": {
         "description": "The balancing-mechanism offer stack for the latest settlement period, cheapest first.",
         "properties": {
@@ -529,6 +576,54 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/accepted-actions": {
+      "get": {
+        "operationId": "accepted_actions_api_accepted_actions_get",
+        "parameters": [
+          {
+            "description": "Number of recent actions.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 8,
+              "description": "Number of recent actions.",
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AcceptedAction"
+                  },
+                  "title": "Response Accepted Actions Api Accepted Actions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accepted Actions"
+      }
+    },
     "/api/bid-stack": {
       "get": {
         "operationId": "bid_stack_api_bid_stack_get",

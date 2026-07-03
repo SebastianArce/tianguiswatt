@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/accepted-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accepted Actions */
+        get: operations["accepted_actions_api_accepted_actions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bid-stack": {
         parameters: {
             query?: never;
@@ -167,6 +184,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AcceptedAction
+         * @description One accepted Balancing Mechanism action (BOALF); level_from → level_to is the ramp.
+         */
+        AcceptedAction: {
+            /**
+             * Acceptance Time
+             * Format: date-time
+             */
+            acceptance_time: string;
+            /** Bm Unit */
+            bm_unit: string | null;
+            /** Level From */
+            level_from: number;
+            /** Level To */
+            level_to: number;
+            /** National Grid Bm Unit */
+            national_grid_bm_unit: string;
+            /** So Flag */
+            so_flag: boolean;
+        };
         /**
          * BidStack
          * @description The balancing-mechanism offer stack for the latest settlement period, cheapest first.
@@ -347,6 +385,38 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    accepted_actions_api_accepted_actions_get: {
+        parameters: {
+            query?: {
+                /** @description Number of recent actions. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedAction"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     bid_stack_api_bid_stack_get: {
         parameters: {
             query?: never;
