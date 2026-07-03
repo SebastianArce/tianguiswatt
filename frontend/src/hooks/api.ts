@@ -37,3 +37,14 @@ export function usePricesHistory(hours = 12) {
     },
   })
 }
+
+export function useBidStack() {
+  return useQuery({
+    queryKey: ['bid-stack'],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/bid-stack')
+      if (error) throw error
+      return data
+    },
+  })
+}

@@ -62,12 +62,21 @@ const SUPPLY_DEMAND = [
   },
 ]
 
+const BID_STACK = {
+  settlement_period: 42,
+  entries: [
+    { national_grid_bm_unit: 'AAA-1', offer_price: 60, volume_mw: 10, accepted: true },
+    { national_grid_bm_unit: 'BBB-1', offer_price: 100, volume_mw: 20, accepted: false },
+  ],
+}
+
 async function mockApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
   await page.route('**/api/supply-demand*', (route) =>
     route.fulfill({ json: SUPPLY_DEMAND }),
   )
   await page.route('**/api/prices*', (route) => route.fulfill({ json: PRICES }))
+  await page.route('**/api/bid-stack', (route) => route.fulfill({ json: BID_STACK }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
@@ -100,7 +109,7 @@ test('nav switches between pages', async ({ page }) => {
   await page.getByRole('link', { name: 'Explore' }).click()
   await expect(page).toHaveURL(/\/explore$/)
   await expect(
-    page.getByRole('heading', { name: /merit-order bid stack/i }),
+    page.getByRole('heading', { name: /balancing offer stack/i }),
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Learn' }).click()
