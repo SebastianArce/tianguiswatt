@@ -17,7 +17,33 @@ const SNAPSHOT = {
     intensity_gco2: 246,
     intensity_index: 'very high',
   },
+  price: {
+    settlement_period: 42,
+    system_price: 95.0,
+    net_imbalance_volume: -16,
+    apx_price: 101.14,
+    n2ex_price: 0,
+  },
 }
+
+const PRICES = [
+  {
+    period_start: '2026-06-30T20:00:00',
+    settlement_period: 41,
+    system_price: 92,
+    net_imbalance_volume: -10,
+    apx_price: 100,
+    n2ex_price: 0,
+  },
+  {
+    period_start: '2026-06-30T20:30:00',
+    settlement_period: 42,
+    system_price: 95,
+    net_imbalance_volume: -16,
+    apx_price: 101.14,
+    n2ex_price: 0,
+  },
+]
 
 const SUPPLY_DEMAND = [
   {
@@ -41,6 +67,7 @@ async function mockApi(page: import('@playwright/test').Page) {
   await page.route('**/api/supply-demand*', (route) =>
     route.fulfill({ json: SUPPLY_DEMAND }),
   )
+  await page.route('**/api/prices*', (route) => route.fulfill({ json: PRICES }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
@@ -60,6 +87,10 @@ test('home renders live data from the API', async ({ page }) => {
   await expect(page.getByText(/CCGT/)).toBeVisible()
   await expect(page.getByText(/very high/)).toBeVisible()
   await expect(page.getByText(/27367 MW/)).toBeVisible()
+
+  // control-room ticker + prices (folded-in #52)
+  await expect(page.getByText('System price')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Wholesale price' })).toBeVisible()
 })
 
 test('nav switches between pages', async ({ page }) => {
