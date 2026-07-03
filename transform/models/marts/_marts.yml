@@ -48,3 +48,15 @@ models:
         tests: [not_null]
       - name: pair_id
         tests: [not_null]
+
+  - name: mart_metrics
+    description: Long-format metric rollup (metric × granularity × bucket) for /trends.
+    columns:
+      - name: metric
+        tests: [not_null]
+      - name: granularity
+        tests: [not_null]
+      - name: bucket
+        tests: [not_null]
+      - name: value
+        tests: [not_null]
