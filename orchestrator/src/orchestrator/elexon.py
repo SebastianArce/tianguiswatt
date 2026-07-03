@@ -7,6 +7,7 @@ import httpx
 from shared.models import (
     BidOfferAcceptanceRecord,
     BidOfferRecord,
+    BmuRegistryRecord,
     DemandRecord,
     FrequencyRecord,
     FuelInstRecord,
@@ -21,6 +22,7 @@ DEMAND_URL = f"{ELEXON_BASE}/demand/outturn"
 SYSTEM_PRICE_URL = f"{ELEXON_BASE}/balancing/settlement/system-prices"
 MID_URL = f"{ELEXON_BASE}/datasets/MID"
 FREQUENCY_URL = f"{ELEXON_BASE}/system/frequency"
+BMU_REGISTRY_URL = f"{ELEXON_BASE}/reference/bmunits/all"
 BOD_URL = f"{ELEXON_BASE}/datasets/BOD"
 BOALF_URL = f"{ELEXON_BASE}/datasets/BOALF"
 
@@ -187,3 +189,23 @@ def fetch_frequency(
 def parse_frequency(payload: list[dict]) -> list[FrequencyRecord]:
     """Validate raw system-frequency rows into typed records."""
     return [FrequencyRecord.model_validate(row) for row in payload]
+
+
+@retrying
+def fetch_bmu_registry(client: httpx.Client | None = None) -> list[dict]:
+    """Fetch the full Balancing Mechanism Unit reference registry."""
+    owns_client = client is None
+    client = client or httpx.Client(timeout=60)
+    try:
+        response = client.get(BMU_REGISTRY_URL, params={"format": "json"})
+        response.raise_for_status()
+        body = response.json()
+        return body["data"] if isinstance(body, dict) else body
+    finally:
+        if owns_client:
+            client.close()
+
+
+def parse_bmu_registry(payload: list[dict]) -> list[BmuRegistryRecord]:
+    """Validate raw BMU registry rows into typed records."""
+    return [BmuRegistryRecord.model_validate(row) for row in payload]

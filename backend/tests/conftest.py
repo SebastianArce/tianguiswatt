@@ -220,13 +220,14 @@ def _seed(ch: Client) -> None:
         "CREATE TABLE mart_accepted_actions "
         "(acceptance_number UInt64, national_grid_bm_unit String, bm_unit Nullable(String), "
         "acceptance_time DateTime, settlement_date Date, settlement_period_from UInt8, "
-        "level_from Int32, level_to Int32, so_flag Bool, stor_flag Bool) "
+        "level_from Int32, level_to Int32, so_flag Bool, stor_flag Bool, "
+        "unit_name Nullable(String), fuel_type Nullable(String)) "
         "ENGINE = MergeTree ORDER BY acceptance_time"
     )
     ch.insert(
         "mart_accepted_actions",
         [
-            # newest first when ordered by acceptance_time desc: PEMB (20:05) then MINETY (20:00)
+            # newest first when ordered by acceptance_time desc: MINETY (20:05) then PEMB (20:00)
             [
                 101,
                 "PEMB-1",
@@ -238,6 +239,8 @@ def _seed(ch: Client) -> None:
                 90,
                 True,
                 False,
+                "Pembroke Unit 1",
+                "CCGT",
             ],
             [
                 102,
@@ -250,6 +253,8 @@ def _seed(ch: Client) -> None:
                 580,
                 False,
                 False,
+                None,
+                None,
             ],
         ],
         column_names=[
@@ -263,6 +268,8 @@ def _seed(ch: Client) -> None:
             "level_to",
             "so_flag",
             "stor_flag",
+            "unit_name",
+            "fuel_type",
         ],
     )
     ch.command(

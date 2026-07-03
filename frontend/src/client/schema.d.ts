@@ -196,6 +196,8 @@ export interface components {
             acceptance_time: string;
             /** Bm Unit */
             bm_unit: string | null;
+            /** Fuel Type */
+            fuel_type: string | null;
             /** Level From */
             level_from: number;
             /** Level To */
@@ -204,6 +206,8 @@ export interface components {
             national_grid_bm_unit: string;
             /** So Flag */
             so_flag: boolean;
+            /** Unit Name */
+            unit_name: string | null;
         };
         /**
          * BidStack

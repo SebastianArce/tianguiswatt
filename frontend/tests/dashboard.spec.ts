@@ -89,6 +89,8 @@ const ACCEPTED = [
   {
     national_grid_bm_unit: 'PEMB-1',
     bm_unit: 'T_PEMB-1',
+    unit_name: 'Pembroke Unit 1',
+    fuel_type: 'CCGT',
     acceptance_time: '2026-06-30T20:05:00',
     level_from: 0,
     level_to: 180,
@@ -97,6 +99,8 @@ const ACCEPTED = [
   {
     national_grid_bm_unit: 'MINETY-1',
     bm_unit: 'T_MINETY-1',
+    unit_name: null,
+    fuel_type: null,
     acceptance_time: '2026-06-30T20:00:00',
     level_from: 90,
     level_to: -45,
@@ -140,7 +144,8 @@ test('home renders live data from the API', async ({ page }) => {
     page.getByRole('heading', { name: 'Balancing mechanism' }),
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Actions accepted' })).toBeVisible()
-  await expect(page.getByText('PEMB-1')).toBeVisible()
+  await expect(page.getByText('Pembroke Unit 1')).toBeVisible() // registry name
+  await expect(page.getByText('MINETY-1')).toBeVisible() // fallback to raw id
 
   // data-derived text (rendered outside the ECharts canvas so it is assertable)
   await expect(page.getByText(/very high/)).toBeVisible()

@@ -20,7 +20,10 @@ def test_accepted_actions_returns_recent_first(ch_client):
     assert data[0]["level_from"] == 400
     assert data[0]["level_to"] == 580
     assert data[0]["so_flag"] is False
+    assert data[0]["unit_name"] is None  # no registry match
     assert data[1]["so_flag"] is True
+    assert data[1]["unit_name"] == "Pembroke Unit 1"  # enriched from the registry
+    assert data[1]["fuel_type"] == "CCGT"
 
 
 def test_accepted_actions_respects_limit(ch_client):

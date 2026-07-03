@@ -13,3 +13,4 @@ sources:
       - name: bid_offer
       - name: bid_offer_acceptance
       - name: system_frequency
+      - name: bmu_registry
