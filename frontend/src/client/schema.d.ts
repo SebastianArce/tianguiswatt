@@ -78,6 +78,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prices */
+        get: operations["prices_api_prices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshot": {
         parameters: {
             query?: never;
@@ -172,6 +189,37 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** Price */
+        Price: {
+            /** Apx Price */
+            apx_price: number | null;
+            /** N2Ex Price */
+            n2ex_price: number | null;
+            /** Net Imbalance Volume */
+            net_imbalance_volume: number;
+            /** Settlement Period */
+            settlement_period: number;
+            /** System Price */
+            system_price: number;
+        };
+        /** PricePoint */
+        PricePoint: {
+            /** Apx Price */
+            apx_price: number | null;
+            /** N2Ex Price */
+            n2ex_price: number | null;
+            /** Net Imbalance Volume */
+            net_imbalance_volume: number;
+            /**
+             * Period Start
+             * Format: date-time
+             */
+            period_start: string;
+            /** Settlement Period */
+            settlement_period: number;
+            /** System Price */
+            system_price: number;
+        };
         /**
          * Snapshot
          * @description Latest values across all domains for the dashboard's first paint.
@@ -182,6 +230,7 @@ export interface components {
             generation: components["schemas"]["GenerationMixItem"][];
             /** Measured At */
             measured_at: string | null;
+            price: components["schemas"]["Price"] | null;
             supply_demand: components["schemas"]["SupplyDemand"] | null;
         };
         /** SupplyDemand */
@@ -335,6 +384,38 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    prices_api_prices_get: {
+        parameters: {
+            query?: {
+                /** @description History window in hours. */
+                hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricePoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

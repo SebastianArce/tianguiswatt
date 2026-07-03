@@ -19,7 +19,12 @@ from shared.clickhouse import get_client
 # CORS test assert the header; harmless elsewhere (only affects requests with an Origin header).
 os.environ.setdefault("RP_BACKEND_CORS_ORIGINS", "https://tianguiswatt.com")
 
-_MART_TABLES = ("mart_generation_by_fuel", "mart_supply_demand", "mart_carbon")
+_MART_TABLES = (
+    "mart_generation_by_fuel",
+    "mart_supply_demand",
+    "mart_carbon",
+    "mart_prices",
+)
 
 
 def _seed(ch: Client) -> None:
@@ -39,6 +44,15 @@ def _seed(ch: Client) -> None:
         "(from_ts DateTime, forecast_gco2 Nullable(Int32), actual_gco2 Nullable(Int32), "
         "intensity_gco2 Nullable(Int32), intensity_index String) "
         "ENGINE = MergeTree ORDER BY from_ts"
+    )
+    ch.command(
+        "CREATE TABLE mart_prices "
+        "(settlement_date Date, settlement_period UInt8, measured_at DateTime, "
+        "system_sell_price Float64, system_buy_price Float64, net_imbalance_volume Float64, "
+        "price_derivation_code String, apx_price Nullable(Float64), "
+        "apx_volume Nullable(Float64), n2ex_price Nullable(Float64), "
+        "n2ex_volume Nullable(Float64)) "
+        "ENGINE = MergeTree ORDER BY (settlement_date, settlement_period)"
     )
     instant = dt.datetime(2026, 6, 30, 20, 0)
     older = dt.datetime(2026, 6, 30, 14, 0)  # 6h earlier — for window tests
@@ -71,6 +85,51 @@ def _seed(ch: Client) -> None:
             "actual_gco2",
             "intensity_gco2",
             "intensity_index",
+        ],
+    )
+    ch.insert(
+        "mart_prices",
+        [
+            # SP 42 → period_start 20:30 (latest); SP 30 → 14:30 (6h earlier, for windows)
+            [
+                dt.date(2026, 6, 30),
+                42,
+                instant,
+                95.0,
+                95.0,
+                -16.0,
+                "N",
+                101.14,
+                3300.0,
+                0.0,
+                0.0,
+            ],
+            [
+                dt.date(2026, 6, 30),
+                30,
+                older,
+                60.0,
+                60.0,
+                5.0,
+                "N",
+                62.0,
+                2000.0,
+                0.0,
+                0.0,
+            ],
+        ],
+        column_names=[
+            "settlement_date",
+            "settlement_period",
+            "measured_at",
+            "system_sell_price",
+            "system_buy_price",
+            "net_imbalance_volume",
+            "price_derivation_code",
+            "apx_price",
+            "apx_volume",
+            "n2ex_price",
+            "n2ex_volume",
         ],
     )
 

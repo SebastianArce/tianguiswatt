@@ -5,7 +5,7 @@ from __future__ import annotations
 from clickhouse_connect.driver.client import Client
 
 from app.queries.util import query_rows
-from app.schemas import Carbon, GenerationMixItem, Snapshot, SupplyDemand
+from app.schemas import Carbon, GenerationMixItem, Price, Snapshot, SupplyDemand
 
 
 def fetch_snapshot(client: Client) -> Snapshot:
@@ -55,9 +55,29 @@ def fetch_snapshot(client: Client) -> Snapshot:
         else None
     )
 
+    price_rows = query_rows(
+        client,
+        "SELECT settlement_period, system_sell_price, net_imbalance_volume, "
+        "  apx_price, n2ex_price "
+        "FROM mart_prices "
+        "ORDER BY settlement_date DESC, settlement_period DESC LIMIT 1",
+    )
+    price = (
+        Price(
+            settlement_period=price_rows[0][0],
+            system_price=price_rows[0][1],
+            net_imbalance_volume=price_rows[0][2],
+            apx_price=price_rows[0][3],
+            n2ex_price=price_rows[0][4],
+        )
+        if price_rows
+        else None
+    )
+
     return Snapshot(
         measured_at=measured_at,
         generation=generation,
         supply_demand=supply_demand,
         carbon=carbon,
+        price=price,
     )

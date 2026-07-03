@@ -58,6 +58,23 @@ def test_carbon_history(ch_client):
     assert points[0]["intensity_index"] == "high"
 
 
+def test_prices_history_respects_window(ch_client):
+    app.dependency_overrides[get_clickhouse] = lambda: ch_client
+    try:
+        client = TestClient(app)
+        narrow = client.get(
+            "/api/prices?hours=3"
+        ).json()  # only SP 42 (period_start 20:30)
+        wide = client.get("/api/prices?hours=12").json()  # + SP 30 (6h earlier)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert [p["settlement_period"] for p in narrow] == [42]
+    assert len(wide) == 2
+    assert narrow[0]["system_price"] == 95.0
+    assert narrow[0]["apx_price"] == 101.14
+
+
 def test_history_empty_when_marts_absent(empty_ch):
     app.dependency_overrides[get_clickhouse] = lambda: empty_ch
     try:

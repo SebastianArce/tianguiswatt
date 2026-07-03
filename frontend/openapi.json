@@ -166,6 +166,106 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "Price": {
+        "properties": {
+          "apx_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apx Price"
+          },
+          "n2ex_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N2Ex Price"
+          },
+          "net_imbalance_volume": {
+            "title": "Net Imbalance Volume",
+            "type": "number"
+          },
+          "settlement_period": {
+            "title": "Settlement Period",
+            "type": "integer"
+          },
+          "system_price": {
+            "title": "System Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "settlement_period",
+          "system_price",
+          "net_imbalance_volume",
+          "apx_price",
+          "n2ex_price"
+        ],
+        "title": "Price",
+        "type": "object"
+      },
+      "PricePoint": {
+        "properties": {
+          "apx_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apx Price"
+          },
+          "n2ex_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N2Ex Price"
+          },
+          "net_imbalance_volume": {
+            "title": "Net Imbalance Volume",
+            "type": "number"
+          },
+          "period_start": {
+            "format": "date-time",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "settlement_period": {
+            "title": "Settlement Period",
+            "type": "integer"
+          },
+          "system_price": {
+            "title": "System Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "period_start",
+          "settlement_period",
+          "system_price",
+          "net_imbalance_volume",
+          "apx_price",
+          "n2ex_price"
+        ],
+        "title": "PricePoint",
+        "type": "object"
+      },
       "Snapshot": {
         "description": "Latest values across all domains for the dashboard's first paint.",
         "properties": {
@@ -198,6 +298,16 @@
             ],
             "title": "Measured At"
           },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Price"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "supply_demand": {
             "anyOf": [
               {
@@ -213,7 +323,8 @@
           "measured_at",
           "generation",
           "supply_demand",
-          "carbon"
+          "carbon",
+          "price"
         ],
         "title": "Snapshot",
         "type": "object"
@@ -476,6 +587,54 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/prices": {
+      "get": {
+        "operationId": "prices_api_prices_get",
+        "parameters": [
+          {
+            "description": "History window in hours.",
+            "in": "query",
+            "name": "hours",
+            "required": false,
+            "schema": {
+              "default": 6,
+              "description": "History window in hours.",
+              "maximum": 168,
+              "minimum": 1,
+              "title": "Hours",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PricePoint"
+                  },
+                  "title": "Response Prices Api Prices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prices"
       }
     },
     "/api/snapshot": {

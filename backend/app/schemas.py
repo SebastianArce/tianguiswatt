@@ -26,6 +26,14 @@ class Carbon(BaseModel):
     intensity_index: str
 
 
+class Price(BaseModel):
+    settlement_period: int
+    system_price: float  # single imbalance/cash-out price (sell == buy)
+    net_imbalance_volume: float
+    apx_price: float | None
+    n2ex_price: float | None
+
+
 class Snapshot(BaseModel):
     """Latest values across all domains for the dashboard's first paint."""
 
@@ -33,6 +41,7 @@ class Snapshot(BaseModel):
     generation: list[GenerationMixItem]
     supply_demand: SupplyDemand | None
     carbon: Carbon | None
+    price: Price | None
 
 
 # --- time-series history points ---
@@ -59,3 +68,12 @@ class CarbonPoint(BaseModel):
     actual_gco2: int | None
     intensity_gco2: int | None
     intensity_index: str
+
+
+class PricePoint(BaseModel):
+    period_start: dt.datetime
+    settlement_period: int
+    system_price: float
+    net_imbalance_volume: float
+    apx_price: float | None
+    n2ex_price: float | None
