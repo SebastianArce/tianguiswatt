@@ -3,6 +3,7 @@ import { BalancingPanel } from '@/components/BalancingPanel'
 import { CarbonCard } from '@/components/CarbonCard'
 import { GenerationStackCard } from '@/components/GenerationStackCard'
 import { InterconnectorFlows } from '@/components/InterconnectorFlows'
+import { LiveIndicator } from '@/components/LiveIndicator'
 import { PricesCard } from '@/components/PricesCard'
 import { StatTicker } from '@/components/StatTicker'
 import { SupplyDemandCard } from '@/components/SupplyDemandCard'
@@ -19,9 +20,7 @@ export function HomePage() {
             The grid, right now
           </h1>
         </div>
-        <span className="flex items-center gap-2 font-mono text-[11px] text-wind">
-          <span className="h-1.5 w-1.5 rounded-full bg-wind" /> live feed
-        </span>
+        <LiveIndicator />
       </div>
 
       <StatTicker />
