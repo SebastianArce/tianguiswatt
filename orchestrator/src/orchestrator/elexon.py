@@ -5,6 +5,8 @@ from __future__ import annotations
 import httpx
 
 from shared.models import (
+    BidOfferAcceptanceRecord,
+    BidOfferRecord,
     DemandRecord,
     FuelInstRecord,
     MarketIndexPriceRecord,
@@ -17,6 +19,8 @@ FUELINST_URL = f"{ELEXON_BASE}/datasets/FUELINST"
 DEMAND_URL = f"{ELEXON_BASE}/demand/outturn"
 SYSTEM_PRICE_URL = f"{ELEXON_BASE}/balancing/settlement/system-prices"
 MID_URL = f"{ELEXON_BASE}/datasets/MID"
+BOD_URL = f"{ELEXON_BASE}/datasets/BOD"
+BOALF_URL = f"{ELEXON_BASE}/datasets/BOALF"
 
 
 @retrying
@@ -112,3 +116,49 @@ def parse_system_prices(payload: list[dict]) -> list[SystemPriceRecord]:
 def parse_market_index_price(payload: list[dict]) -> list[MarketIndexPriceRecord]:
     """Validate raw Market Index Price rows into typed records."""
     return [MarketIndexPriceRecord.model_validate(row) for row in payload]
+
+
+@retrying
+def fetch_bid_offer(
+    from_iso: str, to_iso: str, client: httpx.Client | None = None
+) -> list[dict]:
+    """Fetch Balancing Mechanism bid-offer pairs (BOD) for an ISO datetime range."""
+    owns_client = client is None
+    client = client or httpx.Client(timeout=60)
+    try:
+        response = client.get(
+            BOD_URL, params={"from": from_iso, "to": to_iso, "format": "json"}
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+    finally:
+        if owns_client:
+            client.close()
+
+
+@retrying
+def fetch_bid_offer_acceptances(
+    from_iso: str, to_iso: str, client: httpx.Client | None = None
+) -> list[dict]:
+    """Fetch accepted BM actions (BOALF) for an ISO datetime range."""
+    owns_client = client is None
+    client = client or httpx.Client(timeout=60)
+    try:
+        response = client.get(
+            BOALF_URL, params={"from": from_iso, "to": to_iso, "format": "json"}
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+    finally:
+        if owns_client:
+            client.close()
+
+
+def parse_bid_offer(payload: list[dict]) -> list[BidOfferRecord]:
+    """Validate raw BOD rows into typed records."""
+    return [BidOfferRecord.model_validate(row) for row in payload]
+
+
+def parse_bid_offer_acceptances(payload: list[dict]) -> list[BidOfferAcceptanceRecord]:
+    """Validate raw BOALF rows into typed records."""
+    return [BidOfferAcceptanceRecord.model_validate(row) for row in payload]

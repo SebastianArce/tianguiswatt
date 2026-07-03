@@ -3,6 +3,8 @@
 from dagster import Definitions
 
 from orchestrator.assets import (
+    bid_offer,
+    bid_offer_acceptance,
     carbon_intensity_national,
     demand,
     generation_fuelinst,
@@ -19,6 +21,8 @@ defs = Definitions(
         carbon_intensity_national,
         system_price,
         market_index_price,
+        bid_offer,
+        bid_offer_acceptance,
         marts,
     ],
     schedules=[pipeline_schedule],

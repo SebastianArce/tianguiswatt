@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS raw.bid_offer_acceptance
     settlement_date        Date,
     settlement_period_from UInt8,
     settlement_period_to   UInt8,
-    bm_unit                LowCardinality(String),
+    bm_unit                LowCardinality(Nullable(String)),
     acceptance_number      UInt64,
     acceptance_time        DateTime,
     time_from              DateTime,
