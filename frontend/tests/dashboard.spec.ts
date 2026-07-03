@@ -131,6 +131,7 @@ test('home renders live data from the API', async ({ page }) => {
 
   await expect(page.getByText('TianguisWatt')).toBeVisible()
   await expect(page.getByRole('heading', { name: /the grid, right now/i })).toBeVisible()
+  await expect(page.getByText(/updated/)).toBeVisible() // data-freshness badge
   await expect(page.getByRole('heading', { name: 'Generation mix' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Supply vs demand' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Carbon intensity' })).toBeVisible()
