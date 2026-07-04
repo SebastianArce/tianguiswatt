@@ -43,8 +43,11 @@ export function StatTicker() {
 
   return (
     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-line bg-line sm:grid-cols-5">
-      {tiles.map((t) => (
-        <div key={t.label} className="bg-paper px-4 py-3">
+      {tiles.map((t, i) => (
+        <div
+          key={t.label}
+          className={`bg-paper px-4 py-3 ${i === 0 ? 'max-sm:col-span-2' : ''}`}
+        >
           <div className="font-mono text-[9.5px] tracking-[0.1em] text-muted uppercase">
             {t.label}
           </div>

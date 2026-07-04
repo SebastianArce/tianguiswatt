@@ -181,3 +181,30 @@ test('nav switches between pages', async ({ page }) => {
     page.getByRole('heading', { name: /how the gb market sets a price/i }),
   ).toBeVisible()
 })
+
+test('mobile menu opens and navigates', async ({ page }) => {
+  await mockApi(page)
+  await page.setViewportSize({ width: 375, height: 800 })
+  await page.goto('/')
+
+  // desktop nav is hidden at this width; navigate via the hamburger drawer
+  await page.getByRole('button', { name: 'Open menu' }).click()
+  await page.getByRole('link', { name: 'Trends' }).click()
+  await expect(page).toHaveURL(/\/trends$/)
+  await expect(
+    page.getByRole('heading', { name: /trends over time/i }),
+  ).toBeVisible()
+})
+
+test('no horizontal overflow on mobile', async ({ page }) => {
+  await mockApi(page)
+  await page.setViewportSize({ width: 320, height: 800 })
+  for (const path of ['/', '/explore', '/trends', '/learn']) {
+    await page.goto(path)
+    await page.waitForTimeout(250)
+    const overflows = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1,
+    )
+    expect(overflows, `horizontal overflow at ${path}`).toBe(false)
+  }
+})

@@ -128,7 +128,7 @@ export function ExplorePage() {
             Accepted by NESO
           </span>
         </div>
-        <div ref={chartRef} className="h-[420px] w-full" />
+        <div ref={chartRef} className="h-[300px] w-full sm:h-[420px]" />
         {stats.units === 0 && (
           <p className="-mt-56 text-center text-sm text-muted">
             Warming up — waiting for the latest balancing-mechanism data.

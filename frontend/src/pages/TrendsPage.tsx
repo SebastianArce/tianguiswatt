@@ -126,7 +126,7 @@ export function TrendsPage() {
           <h2 className="font-display text-lg text-ink">{meta.label}</h2>
           <span className="font-mono text-xs text-muted">{meta.unit}</span>
         </div>
-        <div ref={chartRef} className="h-[440px] w-full" />
+        <div ref={chartRef} className="h-[320px] w-full sm:h-[440px]" />
         {empty && (
           <p className="-mt-56 text-center text-sm text-muted">No data in this window yet.</p>
         )}
