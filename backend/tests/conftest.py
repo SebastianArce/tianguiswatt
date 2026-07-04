@@ -198,21 +198,20 @@ def _seed(ch: Client) -> None:
         "(metric String, granularity String, bucket DateTime, value Float64) "
         "ENGINE = MergeTree ORDER BY (metric, granularity, bucket)"
     )
+    # UTC-aware timestamps so the stored hour-of-day is timezone-independent (matching how
+    # the real pipeline stores UTC), which the /api/profile hour-of-day queries rely on.
     ch.insert(
         "mart_metrics",
         [
             # demand/hour: latest bucket 20:00; the 06-25 row is outside a 24h window
-            ["demand", "hour", dt.datetime(2026, 6, 30, 18, 0), 22000.0],
-            ["demand", "hour", dt.datetime(2026, 6, 30, 19, 0), 21000.0],
-            ["demand", "hour", dt.datetime(2026, 6, 30, 20, 0), 20000.0],
-            ["demand", "hour", dt.datetime(2026, 6, 25, 12, 0), 99999.0],
-            [
-                "demand",
-                "day",
-                dt.datetime(2026, 6, 30, 0, 0),
-                21000.0,
-            ],  # other granularity
-            ["price", "hour", dt.datetime(2026, 6, 30, 20, 0), 100.0],  # other metric
+            ["demand", "hour", dt.datetime(2026, 6, 30, 18, 0, tzinfo=dt.UTC), 22000.0],
+            ["demand", "hour", dt.datetime(2026, 6, 30, 19, 0, tzinfo=dt.UTC), 21000.0],
+            ["demand", "hour", dt.datetime(2026, 6, 30, 20, 0, tzinfo=dt.UTC), 20000.0],
+            ["demand", "hour", dt.datetime(2026, 6, 25, 12, 0, tzinfo=dt.UTC), 99999.0],
+            # other granularity
+            ["demand", "day", dt.datetime(2026, 6, 30, 0, 0, tzinfo=dt.UTC), 21000.0],
+            # other metric
+            ["price", "hour", dt.datetime(2026, 6, 30, 20, 0, tzinfo=dt.UTC), 100.0],
         ],
         column_names=["metric", "granularity", "bucket", "value"],
     )

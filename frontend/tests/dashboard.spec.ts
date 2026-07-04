@@ -108,6 +108,26 @@ const ACCEPTED = [
   },
 ]
 
+const PROFILE = {
+  metric: 'demand',
+  days: 30,
+  intraday: Array.from({ length: 24 }, (_, h) => ({
+    hour: h,
+    p10: 15000 + h * 100,
+    p25: 16000 + h * 100,
+    p50: 18000 + h * 120,
+    p75: 20000 + h * 100,
+    p90: 22000 + h * 100,
+  })),
+  weekly: Array.from({ length: 7 }, (_, wd) =>
+    Array.from({ length: 24 }, (_, h) => ({
+      weekday: wd + 1,
+      hour: h,
+      median: 18000 + h * 120,
+    })),
+  ).flat(),
+}
+
 async function mockApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
   await page.route('**/api/supply-demand*', (route) =>
@@ -120,6 +140,7 @@ async function mockApi(page: import('@playwright/test').Page) {
     route.fulfill({ json: ACCEPTED }),
   )
   await page.route('**/api/timeseries*', (route) => route.fulfill({ json: TIMESERIES }))
+  await page.route('**/api/profile*', (route) => route.fulfill({ json: PROFILE }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
@@ -179,6 +200,9 @@ test('nav switches between pages', async ({ page }) => {
   await expect(page).toHaveURL(/\/trends$/)
   await expect(
     page.getByRole('heading', { name: /market trends/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /a typical day/i }),
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Learn' }).click()
