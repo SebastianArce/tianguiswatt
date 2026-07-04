@@ -189,6 +189,7 @@ test('nav switches between pages', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: /explore the data/i }),
   ).toBeVisible()
+  await expect(page.getByText(/updated/)).toBeVisible() // freshness indicator
 
   await page.getByRole('link', { name: 'Bid stack' }).click()
   await expect(page).toHaveURL(/\/bid-stack$/)

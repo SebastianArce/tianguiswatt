@@ -1,5 +1,6 @@
 import type { EChartsOption } from 'echarts'
 import { useMemo, useState } from 'react'
+import { LiveIndicator } from '@/components/LiveIndicator'
 import { useTimeseries } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
 import { chart } from '@/lib/theme'
@@ -95,7 +96,8 @@ export function ExplorePage() {
 
   return (
     <div>
-      <header className="mb-5 max-w-2xl">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <header className="max-w-2xl">
         <div className="font-mono text-[10px] tracking-[0.14em] text-teal uppercase">
           GB market · time series
         </div>
@@ -106,7 +108,9 @@ export function ExplorePage() {
           Any core metric over your chosen window, aggregated server-side in ClickHouse. Switch
           granularity to trade detail for reach — half-hourly out to daily over a month.
         </p>
-      </header>
+        </header>
+        <LiveIndicator />
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <Segmented
