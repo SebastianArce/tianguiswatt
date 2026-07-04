@@ -239,3 +239,15 @@ test('no horizontal overflow on mobile', async ({ page }) => {
     expect(overflows, `horizontal overflow at ${path}`).toBe(false)
   }
 })
+
+test('shows a connection banner when the live data fails', async ({ page }) => {
+  await mockApi(page)
+  // override the snapshot to fail (last matching route wins)
+  await page.route('**/api/snapshot', (route) =>
+    route.fulfill({ status: 500, json: { detail: 'boom' } }),
+  )
+  await page.goto('/')
+  await expect(page.getByText(/can't reach the live data/i)).toBeVisible({
+    timeout: 10_000,
+  })
+})
