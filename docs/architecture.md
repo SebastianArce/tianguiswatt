@@ -91,7 +91,7 @@ supersedes the earlier row instead of duplicating it. Migrations live in
 | `mart_prices` | System (imbalance) price + APX/N2EX |
 | `mart_bid_stack` | Balancing-mechanism offer ladder (merit order) |
 | `mart_accepted_actions` | Recent accepted BM actions (joined to the BMU registry for names) |
-| `mart_metrics` | Long-format rollup (metric × granularity × bucket) for the trends explorer |
+| `mart_metrics` | Long-format rollup (metric × granularity × bucket) for Explore + Trends |
 | `mart_frequency` | System-frequency time series |
 
 ## 4 · Backend (`backend/`, FastAPI)
@@ -100,8 +100,8 @@ A thin read API over the marts. A small [query helper](../backend/app/queries/ut
 and **degrades to an empty result when a mart doesn't exist yet** — so a fresh deploy (before the
 first dbt run) returns `200` with empty data instead of `500`.
 
-- **REST** endpoints for the snapshot, history/time-series, the bid stack, and accepted actions —
-  enum params validated via `Literal` types.
+- **REST** endpoints for the snapshot, history/time-series, the bid stack, accepted actions, and
+  behavioural profiles (intraday/weekly quantiles) — enum params validated via `Literal` types.
 - **Server-Sent Events**: an in-process poller checks the latest data timestamp and pushes an
   event when it advances; the SPA subscribes once via `EventSource` and refetches.
 - **OpenAPI**: the schema is exported and the frontend generates a fully typed client from it, so
@@ -113,8 +113,10 @@ React 19 + TypeScript + Vite, styled with a Tailwind v4 design system (editorial
 a fixed palette, per-fuel colours). Data is fetched with React Query through the
 **OpenAPI-generated client**; charts are ECharts via a `useECharts` hook (with a `ResizeObserver`
 so charts track their container). The UI is responsive down to phones (a hamburger drawer replaces
-the inline nav). Pages: the control-room **Home**, the **Explore** bid stack, **Trends**, and
-**Learn**.
+the inline nav). Pages: the control-room **Home**, **Explore** (time-series), **Bid stack** (merit
+order), **Trends** (behavioural analysis — percentile bands + a weekday×hour heatmap), and
+**Learn**. A route-level **error boundary** plus a **connection banner** keep failures graceful — a
+render bug shows a fallback instead of a blank page, and a backend outage is surfaced, not silent.
 
 ## 6 · Deployment & CI/CD
 
@@ -123,8 +125,9 @@ the inline nav). Pages: the control-room **Home**, the **Explore** bid stack, **
 - **Traefik** terminates TLS (Let's Encrypt) and routes the apex to the frontend and
   `api.<domain>` to the backend.
 - **GitHub Actions** — `ci.yml` runs lint/type/test and builds all images on every PR (a required
-  check). Pushing a `v*` tag runs `deploy.yml`: build + push images to GHCR, rsync the compose file
-  to a Hetzner VM, run migrations, and roll the stack.
+  check). Releases are automated by **release-please**, which maintains a changelog + version PR
+  from Conventional Commits; merging it cuts a `v*` tag, and that tag runs `deploy.yml`: build +
+  push images to GHCR, rsync the compose file to a Hetzner VM, run migrations, and roll the stack.
 
 ## Key design decisions
 

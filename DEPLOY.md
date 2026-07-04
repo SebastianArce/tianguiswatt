@@ -1,8 +1,9 @@
 # Deploying TianguisWatt
 
-CD lives in `.github/workflows/deploy.yml`. On every push to `main` it builds the three
-images and pushes them to **GHCR**, then — once enabled — deploys to a Hetzner VM over
-SSH. Production runs `compose.yml` with the `prod` profile
+CD lives in `.github/workflows/deploy.yml`, triggered by **version tags** (`v*`). It builds
+the three images, pushes them to **GHCR**, then — once enabled — deploys to a Hetzner VM over
+SSH. (Pull-request CI validates the image builds; merges to `main` don't deploy.) Production
+runs `compose.yml` with the `prod` profile
 (`docker compose -f compose.yml --profile prod up -d` — Traefik TLS + Dagster, no exposed
 DB ports); ingestion + dbt run automatically via the Dagster daemon every 15 minutes.
 
@@ -28,6 +29,8 @@ sudo mkdir -p /opt/tianguiswatt && sudo chown deploy:deploy /opt/tianguiswatt
 - `POSTGRES_PASSWORD` — `openssl rand -hex 24`
 - `CLICKHOUSE_USER` = `tianguiswatt` · `CLICKHOUSE_DB` = `tianguiswatt`
 - `CLICKHOUSE_PASSWORD` — `openssl rand -hex 24`
+- `RELEASE_PLEASE_TOKEN` — a fine-grained PAT (Contents + Pull requests + Issues: write) so
+  release-please can open the release PR **and** its tag triggers this deploy (see *Releasing*)
 
 **3. GitHub Actions → Variables** (same page → Variables)
 - `DOMAIN` = `tianguiswatt.com`
@@ -37,18 +40,20 @@ sudo mkdir -p /opt/tianguiswatt && sudo chown deploy:deploy /opt/tianguiswatt
 > The DB passwords must stay **stable** after the first deploy — changing them won't match
 > the existing Postgres/ClickHouse volumes.
 
-## Deploying
-Merges to `main` don't deploy — only version tags do (image builds are validated in PR
-CI). To release, push a version tag:
-```bash
-git tag v0.1.0 && git push origin v0.1.0
-```
-The tag triggers: build `:v0.1.0` + `:latest` → SSH to the VM → write `.env` → pull →
-migrate → `up -d`. Traefik requests a Let's Encrypt cert for `tianguiswatt.com`
-automatically (needs DNS + port 80 open); first issuance takes a few seconds.
-**Rollback** = redeploy an earlier tag.
+## Releasing
+Releases are automated with **release-please** (`.github/workflows/release-please.yml`). It
+watches `main` and keeps a *release PR* up to date — a CHANGELOG + version bump derived from
+the Conventional Commit messages since the last release. **Merging that release PR** cuts a
+GitHub Release and a `v*` tag.
 
-(Later, release-please (#8) will cut these version tags for you from Conventional Commits.)
+That tag triggers `deploy.yml`: build `:vX.Y.Z` + `:latest` → SSH to the VM → write `.env` →
+pull → migrate → `up -d`. Traefik requests a Let's Encrypt cert for `tianguiswatt.com`
+automatically (needs DNS + port 80 open); first issuance takes a few seconds.
+**Rollback** = redeploy an earlier tag (Actions → Deploy → *Run workflow*, or re-push the tag).
+
+> The release tag only fires the deploy because release-please uses the `RELEASE_PLEASE_TOKEN`
+> PAT — GitHub suppresses workflow-triggered-by-workflow events when the default token creates
+> the tag. You can always cut a release by hand instead: `git tag v0.1.0 && git push origin v0.1.0`.
 
 ## Operating
 - **Images:** `ghcr.io/sebastianarce/tianguiswatt-{backend,frontend,orchestrator}`.

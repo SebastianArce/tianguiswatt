@@ -20,10 +20,12 @@ in **[docs/architecture.md](docs/architecture.md)**.
 
 - **Control room** — the live generation mix over 24h, interconnector flows, system frequency,
   carbon intensity, price, net imbalance, and the balancing actions NESO most recently accepted.
-- **Bid-stack explorer** — the balancing-mechanism offer stack (merit order), cheapest-first,
-  with the actions the system operator accepted highlighted.
-- **Trends** — any core metric over a chosen window and granularity, aggregated server-side in
-  ClickHouse from a long-format rollup.
+- **Explore** — any core metric over a chosen window and granularity (per-settlement-period to
+  daily), aggregated server-side in ClickHouse.
+- **Bid stack** — the balancing-mechanism offer stack (merit order), cheapest-first, with the
+  actions the system operator accepted highlighted.
+- **Trends** — how demand, generation, price and carbon *typically* behave: intraday percentile
+  bands and a weekday × hour heatmap, from ClickHouse quantile aggregations.
 - **Learn** — a short explainer of how the GB marginal-price market sets a price.
 
 Data updates push to the browser live over Server-Sent Events, and a freshness badge shows how
@@ -69,7 +71,7 @@ the React SPA (typed against the API's OpenAPI schema). See
 | **Ingestion** | Python 3.12, httpx, pydantic — Elexon Insights + NESO Carbon Intensity |
 | **Backend** | FastAPI, pydantic-settings, clickhouse-connect; OpenAPI-typed |
 | **Frontend** | React 19, TypeScript, Vite, Tailwind v4, ECharts, React Query, openapi-fetch |
-| **Infra & CI/CD** | Docker Compose, Traefik + Let's Encrypt, GitHub Actions, GHCR, Hetzner |
+| **Infra & CI/CD** | Docker Compose, Traefik + Let's Encrypt, GitHub Actions + release-please, GHCR, Hetzner |
 | **Tooling** | uv (workspace monorepo), ruff, ty, oxlint, Playwright, bun |
 
 ## Repository layout
@@ -82,7 +84,7 @@ the React SPA (typed against the API's OpenAPI schema). See
 | `backend/` | FastAPI app (REST + SSE) |
 | `frontend/` | React dashboard |
 | `compose.yml` | Full stack (dev via `compose.override.yml`, prod via the `prod` profile) |
-| `.github/workflows/` | `ci.yml` (PR checks) · `deploy.yml` (tag-triggered deploy) |
+| `.github/workflows/` | `ci.yml` (PR checks) · `deploy.yml` (tag-triggered deploy) · `release-please.yml` (changelog + releases) |
 
 ## Run it locally
 
@@ -99,9 +101,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev workflow (tests, linting, the
 
 ## Deployment
 
-Pushing a `v*` tag triggers GitHub Actions to build the images (pushed to GHCR) and deploy to a
-Hetzner VM behind Traefik with automatic TLS. Pull-request CI builds every image as a required
-check. See [DEPLOY.md](DEPLOY.md).
+Releases are automated with **release-please**: merging its release PR cuts a `v*` tag, which
+triggers GitHub Actions to build the images (GHCR) and deploy to a Hetzner VM behind Traefik with
+automatic TLS. Pull-request CI builds every image as a required check. See [DEPLOY.md](DEPLOY.md).
 
 ## About the name
 
