@@ -294,6 +294,80 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "IntradayBucket": {
+        "description": "Distribution of a metric at a given hour-of-day across the profiled window.",
+        "properties": {
+          "hour": {
+            "title": "Hour",
+            "type": "integer"
+          },
+          "p10": {
+            "title": "P10",
+            "type": "number"
+          },
+          "p25": {
+            "title": "P25",
+            "type": "number"
+          },
+          "p50": {
+            "title": "P50",
+            "type": "number"
+          },
+          "p75": {
+            "title": "P75",
+            "type": "number"
+          },
+          "p90": {
+            "title": "P90",
+            "type": "number"
+          }
+        },
+        "required": [
+          "hour",
+          "p10",
+          "p25",
+          "p50",
+          "p75",
+          "p90"
+        ],
+        "title": "IntradayBucket",
+        "type": "object"
+      },
+      "MetricProfile": {
+        "description": "How a metric typically behaves \u2014 across the day (bands) and the week (heatmap).",
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "intraday": {
+            "items": {
+              "$ref": "#/components/schemas/IntradayBucket"
+            },
+            "title": "Intraday",
+            "type": "array"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "weekly": {
+            "items": {
+              "$ref": "#/components/schemas/WeekdayHourCell"
+            },
+            "title": "Weekly",
+            "type": "array"
+          }
+        },
+        "required": [
+          "metric",
+          "days",
+          "intraday",
+          "weekly"
+        ],
+        "title": "MetricProfile",
+        "type": "object"
+      },
       "Price": {
         "properties": {
           "apx_price": {
@@ -603,6 +677,29 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "WeekdayHourCell": {
+        "properties": {
+          "hour": {
+            "title": "Hour",
+            "type": "integer"
+          },
+          "median": {
+            "title": "Median",
+            "type": "number"
+          },
+          "weekday": {
+            "title": "Weekday",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "weekday",
+          "hour",
+          "median"
+        ],
+        "title": "WeekdayHourCell",
+        "type": "object"
       }
     }
   },
@@ -860,6 +957,65 @@
           }
         },
         "summary": "Prices"
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "operationId": "profile_api_profile_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "enum": [
+                "demand",
+                "generation",
+                "carbon",
+                "price"
+              ],
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Days of history to profile.",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "description": "Days of history to profile.",
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Profile"
       }
     },
     "/api/snapshot": {

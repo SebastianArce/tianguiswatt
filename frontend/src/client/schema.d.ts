@@ -129,6 +129,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profile */
+        get: operations["profile_api_profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/snapshot": {
         parameters: {
             query?: never;
@@ -286,6 +303,38 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * IntradayBucket
+         * @description Distribution of a metric at a given hour-of-day across the profiled window.
+         */
+        IntradayBucket: {
+            /** Hour */
+            hour: number;
+            /** P10 */
+            p10: number;
+            /** P25 */
+            p25: number;
+            /** P50 */
+            p50: number;
+            /** P75 */
+            p75: number;
+            /** P90 */
+            p90: number;
+        };
+        /**
+         * MetricProfile
+         * @description How a metric typically behaves — across the day (bands) and the week (heatmap).
+         */
+        MetricProfile: {
+            /** Days */
+            days: number;
+            /** Intraday */
+            intraday: components["schemas"]["IntradayBucket"][];
+            /** Metric */
+            metric: string;
+            /** Weekly */
+            weekly: components["schemas"]["WeekdayHourCell"][];
+        };
         /** Price */
         Price: {
             /** Apx Price */
@@ -381,6 +430,15 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WeekdayHourCell */
+        WeekdayHourCell: {
+            /** Hour */
+            hour: number;
+            /** Median */
+            median: number;
+            /** Weekday */
+            weekday: number;
         };
     };
     responses: never;
@@ -568,6 +626,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PricePoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    profile_api_profile_get: {
+        parameters: {
+            query: {
+                metric: "demand" | "generation" | "carbon" | "price";
+                /** @description Days of history to profile. */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricProfile"];
                 };
             };
             /** @description Validation Error */

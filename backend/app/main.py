@@ -13,6 +13,7 @@ from app.api import (
     events,
     health,
     history,
+    profile,
     snapshot,
     timeseries,
 )
@@ -61,4 +62,5 @@ app.include_router(history.router, prefix="/api")
 app.include_router(bid_stack.router, prefix="/api")
 app.include_router(timeseries.router, prefix="/api")
 app.include_router(accepted_actions.router, prefix="/api")
+app.include_router(profile.router, prefix="/api")
 app.include_router(events.router, prefix="/api")

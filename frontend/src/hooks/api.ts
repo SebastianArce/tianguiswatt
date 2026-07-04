@@ -73,6 +73,22 @@ export function useAcceptedActions() {
   })
 }
 
+export function useProfile(
+  metric: 'demand' | 'generation' | 'carbon' | 'price',
+  days: number,
+) {
+  return useQuery({
+    queryKey: ['profile', metric, days],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/profile', {
+        params: { query: { metric, days } },
+      })
+      if (error) throw error
+      return data
+    },
+  })
+}
+
 export function useTimeseries(
   metric: 'demand' | 'generation' | 'carbon' | 'price',
   granularity: 'sp' | 'hour' | 'day',

@@ -99,6 +99,32 @@ class TimeseriesPoint(BaseModel):
     value: float
 
 
+class IntradayBucket(BaseModel):
+    """Distribution of a metric at a given hour-of-day across the profiled window."""
+
+    hour: int
+    p10: float
+    p25: float
+    p50: float
+    p75: float
+    p90: float
+
+
+class WeekdayHourCell(BaseModel):
+    weekday: int  # ClickHouse toDayOfWeek: 1 = Monday … 7 = Sunday
+    hour: int
+    median: float
+
+
+class MetricProfile(BaseModel):
+    """How a metric typically behaves — across the day (bands) and the week (heatmap)."""
+
+    metric: str
+    days: int
+    intraday: list[IntradayBucket]
+    weekly: list[WeekdayHourCell]
+
+
 class AcceptedAction(BaseModel):
     """One accepted Balancing Mechanism action (BOALF); level_from → level_to is the ramp."""
 
