@@ -1,13 +1,14 @@
 # TianguisWatt
 
-> Near-real-time analytics for the GB electricity market — live generation, demand, carbon,
-> prices, and the balancing mechanism, from source APIs to an interactive dashboard.
+> Analytics for the GB electricity market — generation, demand, carbon, prices, and the
+> balancing mechanism — from source APIs to an interactive dashboard, updated in step with the
+> market's half-hourly settlement periods.
 
 **Live → [tianguiswatt.com](https://tianguiswatt.com)**
 
 ![The TianguisWatt control-room dashboard](docs/images/dashboard.png)
 
-TianguisWatt ingests live data from the Great Britain power grid every few minutes, transforms
+TianguisWatt ingests data from the Great Britain power grid every 15 minutes, transforms
 it in a **ClickHouse** warehouse with **dbt**, and serves it through a **FastAPI** backend to an
 interactive **React** dashboard — an operations-style "control room" plus explorers for the
 balancing-mechanism bid stack and time-range trends.
@@ -18,7 +19,7 @@ in **[docs/architecture.md](docs/architecture.md)**.
 
 ## What it shows
 
-- **Control room** — the live generation mix over 24h, interconnector flows, system frequency,
+- **Control room** — the generation mix over the last 24h, interconnector flows, system frequency,
   carbon intensity, price, net imbalance, and the balancing actions NESO most recently accepted.
 - **Explore** — any core metric over a chosen window and granularity (per-settlement-period to
   daily), aggregated server-side in ClickHouse.
@@ -28,8 +29,8 @@ in **[docs/architecture.md](docs/architecture.md)**.
   bands and a weekday × hour heatmap, from ClickHouse quantile aggregations.
 - **Learn** — a short explainer of how the GB marginal-price market sets a price.
 
-Data updates push to the browser live over Server-Sent Events, and a freshness badge shows how
-recent the data is (and turns amber if the pipeline stalls).
+Data updates are pushed to the browser over Server-Sent Events as each cycle lands, and a
+freshness badge shows how recent the data is (and turns amber if the pipeline stalls).
 
 ## Architecture
 
