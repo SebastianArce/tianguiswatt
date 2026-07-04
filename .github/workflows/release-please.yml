@@ -17,10 +17,9 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          # The default GITHUB_TOKEN is enough for the changelog, GitHub Release and tag.
-          # To ALSO trigger deploy.yml on the created tag (and run CI on the release PR),
-          # swap in a PAT stored as the RELEASE_PLEASE_TOKEN secret:
-          #   token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # A PAT (RELEASE_PLEASE_TOKEN) is used instead of the default GITHUB_TOKEN so the
+          # release tag triggers deploy.yml and CI runs on the release PR — GitHub suppresses
+          # those when the default token creates the tag/PR.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
