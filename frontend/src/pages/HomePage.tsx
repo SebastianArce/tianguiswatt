@@ -17,7 +17,7 @@ export function HomePage() {
             GB system · live
           </div>
           <h1 className="mt-2 font-display text-3xl leading-tight text-ink">
-            The grid, right now
+            The state of the grid
           </h1>
         </div>
         <LiveIndicator />
