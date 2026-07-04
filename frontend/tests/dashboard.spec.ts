@@ -166,13 +166,19 @@ test('nav switches between pages', async ({ page }) => {
   await page.getByRole('link', { name: 'Explore' }).click()
   await expect(page).toHaveURL(/\/explore$/)
   await expect(
+    page.getByRole('heading', { name: /explore the data/i }),
+  ).toBeVisible()
+
+  await page.getByRole('link', { name: 'Bid stack' }).click()
+  await expect(page).toHaveURL(/\/bid-stack$/)
+  await expect(
     page.getByRole('heading', { name: /balancing offer stack/i }),
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Trends' }).click()
   await expect(page).toHaveURL(/\/trends$/)
   await expect(
-    page.getByRole('heading', { name: /trends over time/i }),
+    page.getByRole('heading', { name: /market trends/i }),
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Learn' }).click()
@@ -192,14 +198,14 @@ test('mobile menu opens and navigates', async ({ page }) => {
   await page.getByRole('link', { name: 'Trends' }).click()
   await expect(page).toHaveURL(/\/trends$/)
   await expect(
-    page.getByRole('heading', { name: /trends over time/i }),
+    page.getByRole('heading', { name: /market trends/i }),
   ).toBeVisible()
 })
 
 test('no horizontal overflow on mobile', async ({ page }) => {
   await mockApi(page)
   await page.setViewportSize({ width: 320, height: 800 })
-  for (const path of ['/', '/explore', '/trends', '/learn']) {
+  for (const path of ['/', '/explore', '/bid-stack', '/trends', '/learn']) {
     await page.goto(path)
     await page.waitForTimeout(250)
     const overflows = await page.evaluate(
