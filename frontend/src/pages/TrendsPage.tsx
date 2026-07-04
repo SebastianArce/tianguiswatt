@@ -1,5 +1,6 @@
 import type { EChartsOption } from 'echarts'
 import { useMemo, useState } from 'react'
+import { LiveIndicator } from '@/components/LiveIndicator'
 import { useProfile } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
 import { chart } from '@/lib/theme'
@@ -184,7 +185,8 @@ export function TrendsPage() {
 
   return (
     <div>
-      <header className="mb-5 max-w-2xl">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <header className="max-w-2xl">
         <div className="font-mono text-[10px] tracking-[0.14em] text-teal uppercase">
           GB market · analysis
         </div>
@@ -193,7 +195,9 @@ export function TrendsPage() {
           How {meta.label.toLowerCase()} typically behaves — across the day and across the week —
           aggregated in ClickHouse from the last {days} days.
         </p>
-      </header>
+        </header>
+        <LiveIndicator />
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <Segmented

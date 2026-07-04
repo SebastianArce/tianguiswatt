@@ -1,5 +1,6 @@
 import type { EChartsOption } from 'echarts'
 import { useMemo } from 'react'
+import { LiveIndicator } from '@/components/LiveIndicator'
 import { useBidStack } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
 import { chart } from '@/lib/theme'
@@ -87,7 +88,8 @@ export function BidStackPage() {
 
   return (
     <div>
-      <header className="mb-5 max-w-2xl">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <header className="max-w-2xl">
         <div className="font-mono text-[10px] tracking-[0.14em] text-teal uppercase">
           GB market · Balancing mechanism
         </div>
@@ -99,7 +101,9 @@ export function BidStackPage() {
           stacked cheapest-first. Amber marks units NESO actually accepted — the last one sets
           what balancing costs.
         </p>
-      </header>
+        </header>
+        <LiveIndicator />
+      </div>
 
       <div className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-line bg-line sm:grid-cols-4">
         <Tile
