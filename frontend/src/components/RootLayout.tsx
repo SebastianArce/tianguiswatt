@@ -5,6 +5,7 @@ import { useLiveUpdates } from '@/hooks/useLiveUpdates'
 const NAV = [
   { to: '/', label: 'Home', end: true },
   { to: '/explore', label: 'Explore' },
+  { to: '/bid-stack', label: 'Bid stack' },
   { to: '/trends', label: 'Trends' },
   { to: '/learn', label: 'Learn' },
 ]

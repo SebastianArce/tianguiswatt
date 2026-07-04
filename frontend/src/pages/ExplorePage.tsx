@@ -1,146 +1,136 @@
 import type { EChartsOption } from 'echarts'
-import { useMemo } from 'react'
-import { useBidStack } from '@/hooks/api'
+import { useMemo, useState } from 'react'
+import { useTimeseries } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
 import { chart } from '@/lib/theme'
 
-const ACCEPTED_COLOUR = '#d7a13f' // amber
+type Metric = 'demand' | 'generation' | 'carbon' | 'price'
+type Granularity = 'sp' | 'hour' | 'day'
 
-function Tile({ label, value, unit }: { label: string; value: string; unit?: string }) {
+const METRICS: Record<Metric, { label: string; unit: string; color: string }> = {
+  demand: { label: 'Demand', unit: 'MW', color: '#14716b' },
+  generation: { label: 'Generation', unit: 'MW', color: '#3f8d84' },
+  carbon: { label: 'Carbon', unit: 'gCO₂/kWh', color: '#5f74a8' },
+  price: { label: 'Price', unit: '£/MWh', color: '#d7a13f' },
+}
+const WINDOWS = [
+  { label: '6h', value: 6 },
+  { label: '24h', value: 24 },
+  { label: '7d', value: 168 },
+  { label: '30d', value: 720 },
+]
+const GRANS: { label: string; value: Granularity }[] = [
+  { label: 'Per-SP', value: 'sp' },
+  { label: 'Hourly', value: 'hour' },
+  { label: 'Daily', value: 'day' },
+]
+
+function Segmented<T extends string | number>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { label: string; value: T }[]
+  value: T
+  onChange: (v: T) => void
+}) {
   return (
-    <div className="bg-paper px-4 py-3">
-      <div className="font-mono text-[9.5px] tracking-[0.1em] text-muted uppercase">
-        {label}
-      </div>
-      <div className="mt-1 flex items-baseline gap-1">
-        <span className="font-mono text-xl leading-none text-ink">{value}</span>
-        {unit && <span className="font-mono text-[11px] text-muted">{unit}</span>}
-      </div>
+    <div className="inline-flex rounded-md border border-line bg-paper p-0.5">
+      {options.map((o) => (
+        <button
+          key={String(o.value)}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`rounded px-3 py-1 font-mono text-xs transition-colors ${
+            value === o.value ? 'bg-ink text-paper' : 'text-slate hover:text-ink'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   )
 }
 
 export function ExplorePage() {
-  const { data } = useBidStack()
+  const [metric, setMetric] = useState<Metric>('demand')
+  const [hours, setHours] = useState(24)
+  const [granularity, setGranularity] = useState<Granularity>('hour')
+  const { data, isLoading } = useTimeseries(metric, granularity, hours)
+  const meta = METRICS[metric]
 
-  const { option, stats } = useMemo(() => {
-    const entries = data?.entries ?? []
-    const line: [number, number][] = []
-    const acceptedPts: [number, number][] = []
-    let cum = 0
-    let acceptedMax = 0
-    let acceptedMw = 0
-    for (const e of entries) {
-      line.push([cum, e.offer_price]) // segment start
-      cum += e.volume_mw
-      line.push([cum, e.offer_price]) // segment end (horizontal at this price)
-      if (e.accepted) {
-        acceptedPts.push([cum - e.volume_mw / 2, e.offer_price])
-        acceptedMax = Math.max(acceptedMax, e.offer_price)
-        acceptedMw += e.volume_mw
-      }
-    }
-    const opt: EChartsOption = {
+  const option = useMemo<EChartsOption>(() => {
+    const points = (data ?? []).map((p) => [p.bucket, p.value] as [string, number])
+    return {
       tooltip: { trigger: 'axis' },
-      grid: { left: 58, right: 20, top: 16, bottom: 44 },
+      grid: { left: 62, right: 20, top: 16, bottom: 30 },
       xAxis: {
-        type: 'value',
-        name: 'Cumulative offer volume (MW)',
-        nameLocation: 'middle',
-        nameGap: 28,
-        nameTextStyle: { color: chart.muted },
-        axisLabel: { color: chart.muted },
-        splitLine: { lineStyle: { color: chart.line } },
+        type: 'time',
+        axisLabel: { color: chart.muted, hideOverlap: true },
+        axisLine: { lineStyle: { color: chart.line } },
       },
       yAxis: {
         type: 'value',
-        name: '£/MWh',
+        name: meta.unit,
         nameTextStyle: { color: chart.muted },
         axisLabel: { color: chart.muted },
         splitLine: { lineStyle: { color: chart.line } },
+        scale: true,
       },
       series: [
         {
-          name: 'Offer stack',
           type: 'line',
-          data: line,
+          data: points,
           showSymbol: false,
-          lineStyle: { color: chart.teal, width: 1.5 },
-          areaStyle: { color: 'rgba(20,113,107,0.08)' },
-        },
-        {
-          name: 'Accepted',
-          type: 'scatter',
-          data: acceptedPts,
-          symbolSize: 7,
-          itemStyle: { color: ACCEPTED_COLOUR },
+          smooth: granularity !== 'sp',
+          lineStyle: { color: meta.color, width: 1.5 },
+          areaStyle: { color: meta.color, opacity: 0.08 },
         },
       ],
     }
-    return {
-      option: opt,
-      stats: { total: cum, units: entries.length, acceptedMax, acceptedMw },
-    }
-  }, [data])
+  }, [data, meta.color, meta.unit, granularity])
 
   const chartRef = useECharts(option)
+  const empty = !isLoading && (data?.length ?? 0) === 0
 
   return (
     <div>
       <header className="mb-5 max-w-2xl">
         <div className="font-mono text-[10px] tracking-[0.14em] text-teal uppercase">
-          Explore · Balancing mechanism
+          GB market · time series
         </div>
         <h1 className="mt-2 font-display text-3xl leading-tight text-ink">
-          The balancing offer stack
+          Explore the data
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-slate">
-          Every BM unit's cheapest offer to increase output, from real Elexon bid-offer data,
-          stacked cheapest-first. Amber marks units NESO actually accepted — the last one sets
-          what balancing costs.
+          Any core metric over your chosen window, aggregated server-side in ClickHouse. Switch
+          granularity to trade detail for reach — half-hourly out to daily over a month.
         </p>
       </header>
 
-      <div className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-line bg-line sm:grid-cols-4">
-        <Tile
-          label="Settlement period"
-          value={data?.settlement_period != null ? String(data.settlement_period) : '—'}
+      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <Segmented
+          options={(Object.keys(METRICS) as Metric[]).map((m) => ({
+            label: METRICS[m].label,
+            value: m,
+          }))}
+          value={metric}
+          onChange={setMetric}
         />
-        <Tile label="Units offering" value={String(stats.units)} />
-        <Tile label="Offered volume" value={stats.total.toFixed(0)} unit="MW" />
-        <Tile
-          label="Marginal accepted"
-          value={stats.acceptedMax ? `£${stats.acceptedMax.toFixed(0)}` : '—'}
-          unit="/MWh"
-        />
+        <Segmented options={WINDOWS} value={hours} onChange={setHours} />
+        <Segmented options={GRANS} value={granularity} onChange={setGranularity} />
       </div>
 
       <div className="rounded-[10px] border border-line bg-paper p-5">
-        <div className="mb-3 flex items-center gap-5">
-          <span className="flex items-center gap-2 text-xs text-slate">
-            <span className="h-0.5 w-4 bg-teal" /> Offer stack
-          </span>
-          <span className="flex items-center gap-2 text-xs text-slate">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ background: ACCEPTED_COLOUR }}
-            />{' '}
-            Accepted by NESO
-          </span>
+        <div className="mb-1 flex items-baseline justify-between">
+          <h2 className="font-display text-lg text-ink">{meta.label}</h2>
+          <span className="font-mono text-xs text-muted">{meta.unit}</span>
         </div>
-        <div ref={chartRef} className="h-[300px] w-full sm:h-[420px]" />
-        {stats.units === 0 && (
-          <p className="-mt-56 text-center text-sm text-muted">
-            Warming up — waiting for the latest balancing-mechanism data.
-          </p>
+        <div ref={chartRef} className="h-[320px] w-full sm:h-[440px]" />
+        {empty && (
+          <p className="-mt-56 text-center text-sm text-muted">No data in this window yet.</p>
         )}
       </div>
-
-      <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted">
-        This is the <strong className="text-slate">balancing mechanism</strong> (post-gate-closure
-        system balancing), not the day-ahead wholesale market. Per-unit volume is the offer band
-        (max − min offer level across its price pairs).
-      </p>
     </div>
   )
 }
