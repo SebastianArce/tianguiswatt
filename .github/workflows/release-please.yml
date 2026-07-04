@@ -1,0 +1,26 @@
+name: release-please
+
+# Maintains a release PR from Conventional Commit messages on main: it keeps a
+# CHANGELOG.md + version up to date, and on merge cuts a GitHub Release + a v* tag.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          # The default GITHUB_TOKEN is enough for the changelog, GitHub Release and tag.
+          # To ALSO trigger deploy.yml on the created tag (and run CI on the release PR),
+          # swap in a PAT stored as the RELEASE_PLEASE_TOKEN secret:
+          #   token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
