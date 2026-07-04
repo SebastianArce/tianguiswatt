@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { ConnectionBanner } from '@/components/ConnectionBanner'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useLiveUpdates } from '@/hooks/useLiveUpdates'
 
 const NAV = [
   { to: '/', label: 'Home', end: true },
   { to: '/explore', label: 'Explore' },
+  { to: '/bid-stack', label: 'Bid stack' },
   { to: '/trends', label: 'Trends' },
   { to: '/learn', label: 'Learn' },
 ]
@@ -120,8 +123,13 @@ export function RootLayout() {
         </nav>
       </div>
 
+      <ConnectionBanner />
+
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <Outlet />
+        {/* keyed by route so navigating away recovers from a page error */}
+        <ErrorBoundary key={location.pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   )

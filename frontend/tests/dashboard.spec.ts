@@ -108,6 +108,26 @@ const ACCEPTED = [
   },
 ]
 
+const PROFILE = {
+  metric: 'demand',
+  days: 30,
+  intraday: Array.from({ length: 24 }, (_, h) => ({
+    hour: h,
+    p10: 15000 + h * 100,
+    p25: 16000 + h * 100,
+    p50: 18000 + h * 120,
+    p75: 20000 + h * 100,
+    p90: 22000 + h * 100,
+  })),
+  weekly: Array.from({ length: 7 }, (_, wd) =>
+    Array.from({ length: 24 }, (_, h) => ({
+      weekday: wd + 1,
+      hour: h,
+      median: 18000 + h * 120,
+    })),
+  ).flat(),
+}
+
 async function mockApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
   await page.route('**/api/supply-demand*', (route) =>
@@ -120,6 +140,7 @@ async function mockApi(page: import('@playwright/test').Page) {
     route.fulfill({ json: ACCEPTED }),
   )
   await page.route('**/api/timeseries*', (route) => route.fulfill({ json: TIMESERIES }))
+  await page.route('**/api/profile*', (route) => route.fulfill({ json: PROFILE }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
@@ -130,7 +151,7 @@ test('home renders live data from the API', async ({ page }) => {
   await page.goto('/')
 
   await expect(page.getByText('TianguisWatt')).toBeVisible()
-  await expect(page.getByRole('heading', { name: /the grid, right now/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /the state of the grid/i })).toBeVisible()
   await expect(page.getByText(/updated/)).toBeVisible() // data-freshness badge
   await expect(page.getByRole('heading', { name: 'Generation mix' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Supply vs demand' })).toBeVisible()
@@ -166,13 +187,23 @@ test('nav switches between pages', async ({ page }) => {
   await page.getByRole('link', { name: 'Explore' }).click()
   await expect(page).toHaveURL(/\/explore$/)
   await expect(
+    page.getByRole('heading', { name: /explore the data/i }),
+  ).toBeVisible()
+  await expect(page.getByText(/updated/)).toBeVisible() // freshness indicator
+
+  await page.getByRole('link', { name: 'Bid stack' }).click()
+  await expect(page).toHaveURL(/\/bid-stack$/)
+  await expect(
     page.getByRole('heading', { name: /balancing offer stack/i }),
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Trends' }).click()
   await expect(page).toHaveURL(/\/trends$/)
   await expect(
-    page.getByRole('heading', { name: /trends over time/i }),
+    page.getByRole('heading', { name: /market trends/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /a typical day/i }),
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Learn' }).click()
@@ -192,14 +223,14 @@ test('mobile menu opens and navigates', async ({ page }) => {
   await page.getByRole('link', { name: 'Trends' }).click()
   await expect(page).toHaveURL(/\/trends$/)
   await expect(
-    page.getByRole('heading', { name: /trends over time/i }),
+    page.getByRole('heading', { name: /market trends/i }),
   ).toBeVisible()
 })
 
 test('no horizontal overflow on mobile', async ({ page }) => {
   await mockApi(page)
   await page.setViewportSize({ width: 320, height: 800 })
-  for (const path of ['/', '/explore', '/trends', '/learn']) {
+  for (const path of ['/', '/explore', '/bid-stack', '/trends', '/learn']) {
     await page.goto(path)
     await page.waitForTimeout(250)
     const overflows = await page.evaluate(
@@ -207,4 +238,16 @@ test('no horizontal overflow on mobile', async ({ page }) => {
     )
     expect(overflows, `horizontal overflow at ${path}`).toBe(false)
   }
+})
+
+test('shows a connection banner when the live data fails', async ({ page }) => {
+  await mockApi(page)
+  // override the snapshot to fail (last matching route wins)
+  await page.route('**/api/snapshot', (route) =>
+    route.fulfill({ status: 500, json: { detail: 'boom' } }),
+  )
+  await page.goto('/')
+  await expect(page.getByText(/can't reach the live data/i)).toBeVisible({
+    timeout: 10_000,
+  })
 })

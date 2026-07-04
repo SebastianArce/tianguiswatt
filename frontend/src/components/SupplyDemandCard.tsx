@@ -17,7 +17,7 @@ export function SupplyDemandCard() {
       grid: { left: 52, right: 16, top: 32, bottom: 28 },
       xAxis: {
         type: 'time',
-        axisLabel: { color: chart.muted },
+        axisLabel: { color: chart.muted, hideOverlap: true, formatter: '{HH}:{mm}' },
         axisLine: { lineStyle: { color: chart.line } },
       },
       yAxis: {

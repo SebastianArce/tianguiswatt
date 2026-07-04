@@ -5,7 +5,10 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  // surface an outage after a single retry rather than the default three
+  defaultOptions: { queries: { retry: 1 } },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

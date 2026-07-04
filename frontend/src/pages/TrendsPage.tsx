@@ -1,11 +1,11 @@
 import type { EChartsOption } from 'echarts'
 import { useMemo, useState } from 'react'
-import { useTimeseries } from '@/hooks/api'
+import { LiveIndicator } from '@/components/LiveIndicator'
+import { useProfile } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
 import { chart } from '@/lib/theme'
 
 type Metric = 'demand' | 'generation' | 'carbon' | 'price'
-type Granularity = 'sp' | 'hour' | 'day'
 
 const METRICS: Record<Metric, { label: string; unit: string; color: string }> = {
   demand: { label: 'Demand', unit: 'MW', color: '#14716b' },
@@ -14,16 +14,13 @@ const METRICS: Record<Metric, { label: string; unit: string; color: string }> = 
   price: { label: 'Price', unit: '£/MWh', color: '#d7a13f' },
 }
 const WINDOWS = [
-  { label: '6h', value: 6 },
-  { label: '24h', value: 24 },
-  { label: '7d', value: 168 },
-  { label: '30d', value: 720 },
+  { label: '7d', value: 7 },
+  { label: '30d', value: 30 },
+  { label: '90d', value: 90 },
 ]
-const GRANS: { label: string; value: Granularity }[] = [
-  { label: 'Per-SP', value: 'sp' },
-  { label: 'Hourly', value: 'hour' },
-  { label: 'Daily', value: 'day' },
-]
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
+const fmt = (v: number) => v.toLocaleString(undefined, { maximumFractionDigits: 1 })
 
 function Segmented<T extends string | number>({
   options,
@@ -54,19 +51,28 @@ function Segmented<T extends string | number>({
 
 export function TrendsPage() {
   const [metric, setMetric] = useState<Metric>('demand')
-  const [hours, setHours] = useState(24)
-  const [granularity, setGranularity] = useState<Granularity>('hour')
-  const { data, isLoading } = useTimeseries(metric, granularity, hours)
+  const [days, setDays] = useState(30)
+  const { data } = useProfile(metric, days)
   const meta = METRICS[metric]
-
-  const option = useMemo<EChartsOption>(() => {
-    const points = (data ?? []).map((p) => [p.bucket, p.value] as [string, number])
+  // Intraday percentile bands (p10–p90 outer + p25–p75 inner) with a median line.
+  const bandsOption = useMemo<EChartsOption>(() => {
+    const intraday = data?.intraday ?? []
+    const cat = intraday.map((b) => String(b.hour).padStart(2, '0'))
     return {
-      tooltip: { trigger: 'axis' },
-      grid: { left: 62, right: 20, top: 16, bottom: 30 },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params) => {
+          const ps = params as unknown as { dataIndex: number }[]
+          const b = intraday[ps[0]?.dataIndex]
+          if (!b) return ''
+          return `${String(b.hour).padStart(2, '0')}:00<br/>median <b>${fmt(b.p50)}</b> ${meta.unit}<br/>p10–p90 ${fmt(b.p10)}–${fmt(b.p90)}`
+        },
+      },
+      grid: { left: 58, right: 16, top: 12, bottom: 28 },
       xAxis: {
-        type: 'time',
-        axisLabel: { color: chart.muted },
+        type: 'category',
+        data: cat,
+        axisLabel: { color: chart.muted, interval: 3 },
         axisLine: { lineStyle: { color: chart.line } },
       },
       yAxis: {
@@ -78,35 +84,120 @@ export function TrendsPage() {
         scale: true,
       },
       series: [
+        // outer band: p10 (invisible base) + (p90 − p10) filled
         {
           type: 'line',
-          data: points,
-          showSymbol: false,
-          smooth: granularity !== 'sp',
-          lineStyle: { color: meta.color, width: 1.5 },
-          areaStyle: { color: meta.color, opacity: 0.08 },
+          stack: 'outer',
+          data: intraday.map((b) => +b.p10.toFixed(1)),
+          lineStyle: { opacity: 0 },
+          symbol: 'none',
+          silent: true,
+        },
+        {
+          type: 'line',
+          stack: 'outer',
+          data: intraday.map((b) => +(b.p90 - b.p10).toFixed(1)),
+          lineStyle: { opacity: 0 },
+          areaStyle: { color: meta.color, opacity: 0.1 },
+          symbol: 'none',
+          silent: true,
+        },
+        // inner band: p25 (invisible base) + (p75 − p25) filled
+        {
+          type: 'line',
+          stack: 'inner',
+          data: intraday.map((b) => +b.p25.toFixed(1)),
+          lineStyle: { opacity: 0 },
+          symbol: 'none',
+          silent: true,
+        },
+        {
+          type: 'line',
+          stack: 'inner',
+          data: intraday.map((b) => +(b.p75 - b.p25).toFixed(1)),
+          lineStyle: { opacity: 0 },
+          areaStyle: { color: meta.color, opacity: 0.18 },
+          symbol: 'none',
+          silent: true,
+        },
+        // median
+        {
+          type: 'line',
+          data: intraday.map((b) => +b.p50.toFixed(1)),
+          lineStyle: { color: meta.color, width: 2 },
+          symbol: 'none',
+          smooth: true,
         },
       ],
     }
-  }, [data, meta.color, meta.unit, granularity])
+  }, [data, meta])
 
-  const chartRef = useECharts(option)
-  const empty = !isLoading && (data?.length ?? 0) === 0
+  // Weekday × hour heatmap of the median value.
+  const heatOption = useMemo<EChartsOption>(() => {
+    const weekly = data?.weekly ?? []
+    const vals = weekly.map((c) => c.median)
+    return {
+      tooltip: {
+        position: 'top',
+        formatter: (p) => {
+          const d = (p as unknown as { data: [number, number, number] }).data
+          return `${WEEKDAYS[d[1]]} ${String(d[0]).padStart(2, '0')}:00<br/>median <b>${fmt(d[2])}</b> ${meta.unit}`
+        },
+      },
+      grid: { left: 42, right: 12, top: 8, bottom: 52 },
+      xAxis: {
+        type: 'category',
+        data: HOURS,
+        splitArea: { show: true },
+        axisLabel: { color: chart.muted, interval: 3 },
+      },
+      yAxis: {
+        type: 'category',
+        data: WEEKDAYS,
+        splitArea: { show: true },
+        axisLabel: { color: chart.muted },
+      },
+      visualMap: {
+        min: vals.length ? Math.min(...vals) : 0,
+        max: vals.length ? Math.max(...vals) : 1,
+        calculable: false,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: 4,
+        itemWidth: 12,
+        itemHeight: 90,
+        inRange: { color: ['#eef3f1', '#7fb0a9', '#14716b'] },
+        textStyle: { color: chart.muted, fontSize: 10 },
+      },
+      series: [
+        {
+          type: 'heatmap',
+          data: weekly.map((c) => [c.hour, c.weekday - 1, +c.median.toFixed(1)]),
+          itemStyle: { borderColor: chart.line, borderWidth: 0.5 },
+        },
+      ],
+    }
+  }, [data, meta])
+
+  const bandsRef = useECharts(bandsOption)
+  const heatRef = useECharts(heatOption)
+  const empty = (data?.intraday?.length ?? 0) === 0
 
   return (
     <div>
-      <header className="mb-5 max-w-2xl">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <header className="max-w-2xl">
         <div className="font-mono text-[10px] tracking-[0.14em] text-teal uppercase">
-          Explore · Trends
+          GB market · analysis
         </div>
-        <h1 className="mt-2 font-display text-3xl leading-tight text-ink">
-          Trends over time
-        </h1>
+        <h1 className="mt-2 font-display text-3xl leading-tight text-ink">Market trends</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate">
-          Any core metric over your chosen window, aggregated server-side in ClickHouse. Switch
-          granularity to trade detail for reach — half-hourly out to daily over a month.
+          How {meta.label.toLowerCase()} typically behaves — across the day and across the week —
+          aggregated in ClickHouse from the last {days} days.
         </p>
-      </header>
+        </header>
+        <LiveIndicator />
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <Segmented
@@ -117,19 +208,28 @@ export function TrendsPage() {
           value={metric}
           onChange={setMetric}
         />
-        <Segmented options={WINDOWS} value={hours} onChange={setHours} />
-        <Segmented options={GRANS} value={granularity} onChange={setGranularity} />
+        <Segmented options={WINDOWS} value={days} onChange={setDays} />
       </div>
 
-      <div className="rounded-[10px] border border-line bg-paper p-5">
-        <div className="mb-1 flex items-baseline justify-between">
-          <h2 className="font-display text-lg text-ink">{meta.label}</h2>
-          <span className="font-mono text-xs text-muted">{meta.unit}</span>
-        </div>
-        <div ref={chartRef} className="h-[320px] w-full sm:h-[440px]" />
-        {empty && (
-          <p className="-mt-56 text-center text-sm text-muted">No data in this window yet.</p>
-        )}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <section className="rounded-[10px] border border-line bg-paper p-5 shadow-sm">
+          <h2 className="font-display text-lg text-ink">A typical day</h2>
+          <p className="mt-0.5 text-xs text-slate">
+            Median with the p10–p90 and p25–p75 spread, by hour
+          </p>
+          <div ref={bandsRef} className="mt-3 h-[280px] w-full sm:h-[320px]" />
+          {empty && (
+            <p className="-mt-40 text-center text-sm text-muted">
+              Not enough history yet.
+            </p>
+          )}
+        </section>
+
+        <section className="rounded-[10px] border border-line bg-paper p-5 shadow-sm">
+          <h2 className="font-display text-lg text-ink">By day &amp; hour</h2>
+          <p className="mt-0.5 text-xs text-slate">Median for each weekday and hour</p>
+          <div ref={heatRef} className="mt-3 h-[280px] w-full sm:h-[320px]" />
+        </section>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import { RootLayout } from '@/components/RootLayout'
+import { BidStackPage } from '@/pages/BidStackPage'
 import { ExplorePage } from '@/pages/ExplorePage'
 import { HomePage } from '@/pages/HomePage'
 import { LearnPage } from '@/pages/LearnPage'
@@ -11,6 +12,7 @@ export default function App() {
       <Route element={<RootLayout />}>
         <Route index element={<HomePage />} />
         <Route path="explore" element={<ExplorePage />} />
+        <Route path="bid-stack" element={<BidStackPage />} />
         <Route path="trends" element={<TrendsPage />} />
         <Route path="learn" element={<LearnPage />} />
       </Route>
