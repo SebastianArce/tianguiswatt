@@ -1,14 +1,56 @@
-/** Design tokens shared with src/index.css, for use where Tailwind classes can't reach
- *  (ECharts options). Keep in sync with the `@theme` block. */
-export const chart = {
-  ink: '#17211f',
-  teal: '#14716b',
-  slate: '#54615b',
-  muted: '#8a938f',
-  line: 'rgba(20,30,28,0.12)',
-  font: "'IBM Plex Sans', system-ui, sans-serif",
-  mono: "'IBM Plex Mono', monospace",
-} as const
+import { useTheme } from '@/hooks/useTheme'
+
+const FONT = "'IBM Plex Sans', system-ui, sans-serif"
+const MONO = "'IBM Plex Mono', monospace"
+
+/** Chart-only palette. ECharts can't read CSS variables, so the neutral colours are
+ *  duplicated here per theme (keep the light values in sync with the `@theme` block and
+ *  the dark values with the `.dark` rule in src/index.css). Brand/fuel colours below are
+ *  shared across themes. */
+export type ChartPalette = {
+  ink: string
+  teal: string
+  slate: string
+  muted: string
+  line: string
+  font: string
+  mono: string
+  /** low-opacity area fill under a line series */
+  areaFill: string
+  /** heatmap visualMap ramp: low → mid → high */
+  heatRamp: [string, string, string]
+}
+
+const CHART_PALETTES: Record<'light' | 'dark', ChartPalette> = {
+  light: {
+    ink: '#17211f',
+    teal: '#14716b',
+    slate: '#54615b',
+    muted: '#8a938f',
+    line: 'rgba(20,30,28,0.12)',
+    font: FONT,
+    mono: MONO,
+    areaFill: 'rgba(20,113,107,0.08)',
+    heatRamp: ['#eef3f1', '#7fb0a9', '#14716b'],
+  },
+  dark: {
+    ink: '#e9ede9',
+    teal: '#4a9d94',
+    slate: '#a7b0ab',
+    muted: '#8a938f',
+    line: 'rgba(233,241,236,0.12)',
+    font: FONT,
+    mono: MONO,
+    areaFill: 'rgba(74,157,148,0.18)',
+    heatRamp: ['#16302c', '#2f7d74', '#5fd0c4'],
+  },
+}
+
+/** Chart palette for the active theme. Returns a new object identity on toggle, so charts
+ *  that list it in their option `useMemo` deps rebuild and re-apply. */
+export function useChartTheme(): ChartPalette {
+  return CHART_PALETTES[useTheme().theme]
+}
 
 const INTERCONNECT = '#5f9e78'
 

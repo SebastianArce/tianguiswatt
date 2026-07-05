@@ -2,13 +2,14 @@ import type { EChartsOption } from 'echarts'
 import { useMemo } from 'react'
 import { usePricesHistory, useSnapshot } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
-import { chart } from '@/lib/theme'
+import { useChartTheme } from '@/lib/theme'
 import { Card } from './Card'
 
 export function PricesCard() {
   const { data: snap } = useSnapshot()
   const { data: history } = usePricesHistory(12)
   const price = snap?.price
+  const chart = useChartTheme()
 
   const option = useMemo<EChartsOption>(() => {
     const points = history ?? []
@@ -44,7 +45,7 @@ export function PricesCard() {
         },
       ],
     }
-  }, [history])
+  }, [history, chart])
   const chartRef = useECharts(option)
 
   return (

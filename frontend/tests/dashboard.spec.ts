@@ -251,3 +251,29 @@ test('shows a connection banner when the live data fails', async ({ page }) => {
     timeout: 10_000,
   })
 })
+
+test('dark mode toggles, persists across reload, and charts survive', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/')
+
+  const html = page.locator('html')
+  await expect(html).not.toHaveClass(/dark/)
+
+  // turn dark on
+  await page.getByRole('button', { name: /switch to dark mode/i }).click()
+  await expect(html).toHaveClass(/dark/)
+  expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('dark')
+
+  // a charted page still renders its canvas after re-theming
+  await page.getByRole('link', { name: 'Explore' }).click()
+  await expect(page.locator('canvas').first()).toBeVisible()
+
+  // the choice persists across a reload (no flash back to light)
+  await page.reload()
+  await expect(html).toHaveClass(/dark/)
+
+  // turn it back off
+  await page.getByRole('button', { name: /switch to light mode/i }).click()
+  await expect(html).not.toHaveClass(/dark/)
+  expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('light')
+})
