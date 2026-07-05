@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.4.0...v0.5.0) (2026-07-05)
+
+
+### Features
+
+* dark mode ([#114](https://github.com/SebastianArce/tianguiswatt/issues/114)) ([730e3c6](https://github.com/SebastianArce/tianguiswatt/commit/730e3c63ff62cebadfa54608dc6c0559203177eb))
+
+
+### Documentation
+
+* public architecture overview ([#10](https://github.com/SebastianArce/tianguiswatt/issues/10)) ([#96](https://github.com/SebastianArce/tianguiswatt/issues/96)) ([2362c95](https://github.com/SebastianArce/tianguiswatt/commit/2362c950f2a887695bc29914ea82ad24941e63d9))
+
 ## [0.4.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.3.0...v0.4.0) (2026-07-05)
 
 
