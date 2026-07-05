@@ -26,7 +26,9 @@ def test_shared_client_allows_concurrent_queries():
     # A query heavy enough that the 16 threads genuinely overlap — sum() forces iteration
     # (count() is O(1)), so a shared session would collide here.
     def run(_: int) -> int:
-        return client.query("SELECT sum(number) FROM numbers(20000000)").result_rows[0][0]
+        return client.query("SELECT sum(number) FROM numbers(20000000)").result_rows[0][
+            0
+        ]
 
     with ThreadPoolExecutor(max_workers=16) as pool:
         results = list(pool.map(run, range(16)))
