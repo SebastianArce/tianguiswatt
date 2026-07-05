@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/SebastianArce/tianguiswatt/compare/v0.5.0...v0.5.1) (2026-07-05)
+
+
+### Bug Fixes
+
+* ClickHouse concurrent-query 500s (shared session) ([#115](https://github.com/SebastianArce/tianguiswatt/issues/115)) ([c166a87](https://github.com/SebastianArce/tianguiswatt/commit/c166a87b8200bdb75032723cd8e8b847896653f5))
+
 ## [0.5.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.4.0...v0.5.0) (2026-07-05)
 
 
