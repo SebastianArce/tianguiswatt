@@ -66,7 +66,6 @@ balancing bid data (`BOD`) caps queries at 1 hour, so a ~55-minute window is pul
 frequency pulls the last 30 minutes. Re-ingestion overlaps happily (see the dedup pattern below).
 
 ![Dagster asset graph](images/dagster-assets.png)
-<!-- Add a screenshot of the Dagster asset graph / a materialization run as docs/images/dagster-assets.png -->
 
 ## 3 · Warehouse (ClickHouse + dbt)
 
