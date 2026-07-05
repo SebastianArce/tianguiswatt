@@ -7,9 +7,15 @@ from pathlib import Path
 from dagster import AssetExecutionContext, MaterializeResult, asset
 
 from orchestrator.assets import (
+    bid_offer,
+    bid_offer_acceptance,
+    bmu_registry,
     carbon_intensity_national,
     demand,
     generation_fuelinst,
+    market_index_price,
+    system_frequency,
+    system_price,
 )
 
 
@@ -22,7 +28,18 @@ def _dbt_project_dir() -> Path:
 
 
 @asset(
-    deps=[generation_fuelinst, demand, carbon_intensity_national],
+    # every raw source dbt reads — so marts build after the whole cycle's fresh data lands
+    deps=[
+        generation_fuelinst,
+        demand,
+        carbon_intensity_national,
+        system_price,
+        market_index_price,
+        bid_offer,
+        bid_offer_acceptance,
+        system_frequency,
+        bmu_registry,
+    ],
     description="dbt staging + marts, built from raw.* (runs `dbt build`).",
 )
 def marts(context: AssetExecutionContext) -> MaterializeResult:
