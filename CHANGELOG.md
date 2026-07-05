@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.3.0...v0.4.0) (2026-07-05)
+
+
+### Features
+
+* graceful failure handling ([#110](https://github.com/SebastianArce/tianguiswatt/issues/110)) ([815a9d1](https://github.com/SebastianArce/tianguiswatt/commit/815a9d1c51aad68a05da73cd1e009c777303e85c))
+
+
+### Bug Fixes
+
+* complete the marts asset lineage ([#112](https://github.com/SebastianArce/tianguiswatt/issues/112)) ([305f504](https://github.com/SebastianArce/tianguiswatt/commit/305f5042bcd333f8837cac36dc4eaa1d1259be15))
+
 ## [0.3.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.2.5...v0.3.0) (2026-07-04)
 
 
