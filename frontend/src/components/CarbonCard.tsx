@@ -2,13 +2,14 @@ import type { EChartsOption } from 'echarts'
 import { useMemo } from 'react'
 import { useSnapshot } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
-import { chart } from '@/lib/theme'
+import { useChartTheme } from '@/lib/theme'
 import { Card } from './Card'
 
 export function CarbonCard() {
   const { data } = useSnapshot()
   const carbon = data?.carbon
   const value = carbon?.intensity_gco2 ?? 0
+  const chart = useChartTheme()
 
   const option = useMemo<EChartsOption>(
     () => ({
@@ -33,7 +34,7 @@ export function CarbonCard() {
         },
       ],
     }),
-    [value],
+    [value, chart],
   )
   const chartRef = useECharts(option)
 

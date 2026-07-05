@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { LiveIndicator } from '@/components/LiveIndicator'
 import { useProfile } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
-import { chart } from '@/lib/theme'
+import { useChartTheme } from '@/lib/theme'
 
 type Metric = 'demand' | 'generation' | 'carbon' | 'price'
 
@@ -54,6 +54,7 @@ export function TrendsPage() {
   const [days, setDays] = useState(30)
   const { data } = useProfile(metric, days)
   const meta = METRICS[metric]
+  const chart = useChartTheme()
   // Intraday percentile bands (p10–p90 outer + p25–p75 inner) with a median line.
   const bandsOption = useMemo<EChartsOption>(() => {
     const intraday = data?.intraday ?? []
@@ -130,7 +131,7 @@ export function TrendsPage() {
         },
       ],
     }
-  }, [data, meta])
+  }, [data, meta, chart])
 
   // Weekday × hour heatmap of the median value.
   const heatOption = useMemo<EChartsOption>(() => {
@@ -166,7 +167,7 @@ export function TrendsPage() {
         bottom: 4,
         itemWidth: 12,
         itemHeight: 90,
-        inRange: { color: ['#eef3f1', '#7fb0a9', '#14716b'] },
+        inRange: { color: [...chart.heatRamp] },
         textStyle: { color: chart.muted, fontSize: 10 },
       },
       series: [
@@ -177,7 +178,7 @@ export function TrendsPage() {
         },
       ],
     }
-  }, [data, meta])
+  }, [data, meta, chart])
 
   const bandsRef = useECharts(bandsOption)
   const heatRef = useECharts(heatOption)

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { LiveIndicator } from '@/components/LiveIndicator'
 import { useTimeseries } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
-import { chart } from '@/lib/theme'
+import { useChartTheme } from '@/lib/theme'
 
 type Metric = 'demand' | 'generation' | 'carbon' | 'price'
 type Granularity = 'sp' | 'hour' | 'day'
@@ -59,6 +59,7 @@ export function ExplorePage() {
   const [granularity, setGranularity] = useState<Granularity>('hour')
   const { data, isLoading } = useTimeseries(metric, granularity, hours)
   const meta = METRICS[metric]
+  const chart = useChartTheme()
 
   const option = useMemo<EChartsOption>(() => {
     const points = (data ?? []).map((p) => [p.bucket, p.value] as [string, number])
@@ -89,7 +90,7 @@ export function ExplorePage() {
         },
       ],
     }
-  }, [data, meta.color, meta.unit, granularity])
+  }, [data, meta.color, meta.unit, granularity, chart])
 
   const chartRef = useECharts(option)
   const empty = !isLoading && (data?.length ?? 0) === 0

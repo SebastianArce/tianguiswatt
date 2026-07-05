@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { LiveIndicator } from '@/components/LiveIndicator'
 import { useBidStack } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
-import { chart } from '@/lib/theme'
+import { useChartTheme } from '@/lib/theme'
 
 const ACCEPTED_COLOUR = '#d7a13f' // amber
 
@@ -23,6 +23,7 @@ function Tile({ label, value, unit }: { label: string; value: string; unit?: str
 
 export function BidStackPage() {
   const { data } = useBidStack()
+  const chart = useChartTheme()
 
   const { option, stats } = useMemo(() => {
     const entries = data?.entries ?? []
@@ -67,7 +68,7 @@ export function BidStackPage() {
           data: line,
           showSymbol: false,
           lineStyle: { color: chart.teal, width: 1.5 },
-          areaStyle: { color: 'rgba(20,113,107,0.08)' },
+          areaStyle: { color: chart.areaFill },
         },
         {
           name: 'Accepted',
@@ -82,7 +83,7 @@ export function BidStackPage() {
       option: opt,
       stats: { total: cum, units: entries.length, acceptedMax, acceptedMw },
     }
-  }, [data])
+  }, [data, chart])
 
   const chartRef = useECharts(option)
 

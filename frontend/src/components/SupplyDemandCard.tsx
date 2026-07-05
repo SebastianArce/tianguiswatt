@@ -2,11 +2,12 @@ import type { EChartsOption } from 'echarts'
 import { useMemo } from 'react'
 import { useSupplyDemandHistory } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
-import { chart } from '@/lib/theme'
+import { useChartTheme } from '@/lib/theme'
 import { Card } from './Card'
 
 export function SupplyDemandCard() {
   const { data } = useSupplyDemandHistory(12)
+  const chart = useChartTheme()
 
   const option = useMemo<EChartsOption>(() => {
     const points = data ?? []
@@ -42,7 +43,7 @@ export function SupplyDemandCard() {
         },
       ],
     }
-  }, [data])
+  }, [data, chart])
   const chartRef = useECharts(option)
   const latest = data?.at(-1)
 

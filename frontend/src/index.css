@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Dark mode is class-based: a `.dark` on <html> flips the neutral tokens below.
+   (Tailwind v4 — https://tailwindcss.com/docs/dark-mode) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Editorial design language (see the Claude Design "Electricity Market Explorer").
    Tokens become Tailwind utilities: bg-paper, text-ink, text-slate, border-line,
    font-display, font-mono, text-wind, etc. */
@@ -16,6 +20,10 @@
   --color-muted: #8a938f; /* labels / secondary */
   --color-line: rgba(20, 30, 28, 0.1); /* hairline borders */
 
+  /* the inverted "hero" surface (Generation mix card) — stable across themes */
+  --color-hero: #17211f;
+  --color-hero-ink: #f6f6f2;
+
   /* generation fuels */
   --color-wind: #3f8d84;
   --color-solar: #d7a13f;
@@ -24,6 +32,24 @@
   --color-interconnect: #5f9e78;
   --color-biomass: #9a7d5e;
   --color-hydro: #5987a6;
+}
+
+/* Dark theme: re-declare only the neutral/surface tokens (brand + fuel colours are
+   shared). Must be a plain rule — @theme cannot be nested under a selector. */
+.dark {
+  --color-ink: #e9ede9; /* light-on-dark text */
+  --color-paper: #1b2321; /* card surface */
+  --color-mist: #0f1614; /* page background (darker than paper) */
+  --color-slate: #a7b0ab; /* body text */
+  --color-muted: #838b85; /* labels / secondary */
+  --color-line: rgba(233, 241, 236, 0.12); /* hairline borders */
+}
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
 }
 
 body {

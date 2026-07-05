@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { ConnectionBanner } from '@/components/ConnectionBanner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useLiveUpdates } from '@/hooks/useLiveUpdates'
+import { useTheme } from '@/hooks/useTheme'
 
 const NAV = [
   { to: '/', label: 'Home', end: true },
@@ -11,6 +12,49 @@ const NAV = [
   { to: '/trends', label: 'Trends' },
   { to: '/learn', label: 'Learn' },
 ]
+
+/** Light/dark toggle — a sun in dark mode, a moon in light. */
+function ThemeToggle() {
+  const { theme, toggle } = useTheme()
+  const dark = theme === 'dark'
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-pressed={dark}
+      className="rounded-md p-2 text-slate transition-colors hover:bg-ink/5 hover:text-ink"
+    >
+      {dark ? (
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        >
+          <circle cx="10" cy="10" r="3.4" />
+          <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4.05 4.05l1.4 1.4M14.55 14.55l1.4 1.4M15.95 4.05l-1.4 1.4M5.45 14.55l-1.4 1.4" />
+        </svg>
+      ) : (
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M16.5 11.8A6.5 6.5 0 1 1 8.2 3.5a5 5 0 1 0 8.3 8.3z" />
+        </svg>
+      )}
+    </button>
+  )
+}
 
 function linkClass(isActive: boolean, size: 'sm' | 'lg') {
   const pad = size === 'lg' ? 'px-3 py-3 text-base' : 'px-3 py-1.5 text-sm'
@@ -50,28 +94,31 @@ export function RootLayout() {
             </span>
           </div>
 
-          {/* desktop nav */}
-          <nav className="hidden gap-1 sm:flex">
-            {NAV.map((n) => (
-              <NavLink
-                key={n.to}
-                to={n.to}
-                end={n.end}
-                className={({ isActive }) => linkClass(isActive, 'sm')}
-              >
-                {n.label}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="flex items-center gap-1">
+            {/* desktop nav */}
+            <nav className="hidden gap-1 sm:flex">
+              {NAV.map((n) => (
+                <NavLink
+                  key={n.to}
+                  to={n.to}
+                  end={n.end}
+                  className={({ isActive }) => linkClass(isActive, 'sm')}
+                >
+                  {n.label}
+                </NavLink>
+              ))}
+            </nav>
 
-          {/* mobile menu button */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-            aria-expanded={menuOpen}
-            className="-mr-2 rounded-md p-2 text-ink hover:bg-ink/5 sm:hidden"
-          >
+            <ThemeToggle />
+
+            {/* mobile menu button */}
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+              className="-mr-2 rounded-md p-2 text-ink hover:bg-ink/5 sm:hidden"
+            >
             <svg
               width="22"
               height="22"
@@ -83,7 +130,8 @@ export function RootLayout() {
             >
               <path d="M3 6h14M3 10h14M3 14h14" />
             </svg>
-          </button>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -97,7 +145,7 @@ export function RootLayout() {
           aria-label="Close menu"
           tabIndex={menuOpen ? 0 : -1}
           onClick={() => setMenuOpen(false)}
-          className={`absolute inset-0 h-full w-full bg-ink/30 transition-opacity ${
+          className={`absolute inset-0 h-full w-full bg-black/40 transition-opacity ${
             menuOpen ? 'opacity-100' : 'opacity-0'
           }`}
         />
