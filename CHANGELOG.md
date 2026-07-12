@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.5.1...v0.6.0) (2026-07-12)
+
+
+### Features
+
+* GitHub repo link in the header ([#117](https://github.com/SebastianArce/tianguiswatt/issues/117)) ([7315007](https://github.com/SebastianArce/tianguiswatt/commit/73150075e6b3c7135e2c37afc431d7c3db18abb1))
+
 ## [0.5.1](https://github.com/SebastianArce/tianguiswatt/compare/v0.5.0...v0.5.1) (2026-07-05)
 
 
