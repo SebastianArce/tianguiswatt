@@ -180,6 +180,14 @@ test('home renders live data from the API', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Wholesale price' })).toBeVisible()
 })
 
+test('header links to the GitHub repo', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/')
+  const link = page.getByRole('link', { name: 'View source on GitHub' })
+  await expect(link).toHaveAttribute('href', 'https://github.com/SebastianArce/tianguiswatt')
+  await expect(link).toHaveAttribute('target', '_blank')
+})
+
 test('nav switches between pages', async ({ page }) => {
   await mockApi(page)
   await page.goto('/')
