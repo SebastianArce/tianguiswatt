@@ -90,6 +90,24 @@ class MarketIndexPriceRecord(BaseModel):
     volume: float
 
 
+class TariffRateRecord(BaseModel):
+    """One half-hourly Octopus tariff unit rate (p/kWh) with its validity window.
+
+    Covers Agile import and Agile Outgoing export rates; the tariff code is injected at
+    parse time (the API keys rows by URL, not payload). Export rates carry no VAT, so
+    inc- and exc-VAT values are equal there. Import rates can go negative on
+    oversupplied half-hours ("plunge pricing").
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tariff_code: str
+    valid_from: dt.datetime
+    valid_to: dt.datetime | None = None
+    value_exc_vat: float
+    value_inc_vat: float
+
+
 class BidOfferRecord(BaseModel):
     """One Balancing Mechanism bid-offer pair (Elexon BOD): a BM unit's submitted bid and
     offer prices (£/MWh) over a level (MW) range for a settlement period. `pairId` numbers
