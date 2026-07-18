@@ -105,3 +105,16 @@ export function useTimeseries(
     },
   })
 }
+
+export function useBatterySimulation(battery: '5kwh' | '10kwh' | '13.5kwh') {
+  return useQuery({
+    queryKey: ['battery-simulation', battery],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/battery/simulation', {
+        params: { query: { battery } },
+      })
+      if (error) throw error
+      return data
+    },
+  })
+}

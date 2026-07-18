@@ -238,7 +238,7 @@ test('mobile menu opens and navigates', async ({ page }) => {
 test('no horizontal overflow on mobile', async ({ page }) => {
   await mockApi(page)
   await page.setViewportSize({ width: 320, height: 800 })
-  for (const path of ['/', '/explore', '/bid-stack', '/trends', '/learn']) {
+  for (const path of ['/', '/explore', '/bid-stack', '/trends', '/battery', '/learn']) {
     await page.goto(path)
     await page.waitForTimeout(250)
     const overflows = await page.evaluate(
