@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.6.0...v0.7.0) (2026-07-18)
+
+
+### Features
+
+* backfill carbon-intensity history ([#131](https://github.com/SebastianArce/tianguiswatt/issues/131)) ([781db66](https://github.com/SebastianArce/tianguiswatt/commit/781db668405b26b19e9f6ed0a5f171d7bb6105b7))
+* battery dispatch simulation engine (greedy + LP, three strategies) ([#132](https://github.com/SebastianArce/tianguiswatt/issues/132)) ([82e380e](https://github.com/SebastianArce/tianguiswatt/commit/82e380eaa371f0d13e8fcf6812388800e8c3a81b))
+* Battery Lab how-it-works tab ([#136](https://github.com/SebastianArce/tianguiswatt/issues/136)) ([f330545](https://github.com/SebastianArce/tianguiswatt/commit/f330545e1660bc97bad5f8070717ce0ce2c4460b))
+* Battery Lab page with strategy comparison tab ([#135](https://github.com/SebastianArce/tianguiswatt/issues/135)) ([34f124d](https://github.com/SebastianArce/tianguiswatt/commit/34f124dc6f5ccd667003e1248c39f47d6c812a15))
+* battery simulation API endpoints ([#134](https://github.com/SebastianArce/tianguiswatt/issues/134)) ([02c214f](https://github.com/SebastianArce/tianguiswatt/commit/02c214f31a8b4e3d5effb00a71da69755a3ad571))
+* ingest Octopus Agile import/export tariff rates ([#126](https://github.com/SebastianArce/tianguiswatt/issues/126)) ([48e8e43](https://github.com/SebastianArce/tianguiswatt/commit/48e8e43e72b7153dd26b2c1f0096b65c70c0777e))
+* model Agile tariff rates in dbt with carbon per half-hour ([#127](https://github.com/SebastianArce/tianguiswatt/issues/127)) ([027018f](https://github.com/SebastianArce/tianguiswatt/commit/027018fcd13e6939d6e12b09bbd2f307e26b6ea3))
+* typical domestic demand profile (Elexon Class 1, TDCV-scaled) ([#130](https://github.com/SebastianArce/tianguiswatt/issues/130)) ([1a18d84](https://github.com/SebastianArce/tianguiswatt/commit/1a18d84d18bd4611ed7cea49187d15408ed84340))
+
+
+### Bug Fixes
+
+* build marts after tariff rates land each cycle ([#137](https://github.com/SebastianArce/tianguiswatt/issues/137)) ([248a30d](https://github.com/SebastianArce/tianguiswatt/commit/248a30dd4f4f1b16b22c01ee9482ee5e81d8f70e))
+* season column in mart_domestic_profile lost its name to a qualified identifier ([#133](https://github.com/SebastianArce/tianguiswatt/issues/133)) ([ed6769e](https://github.com/SebastianArce/tianguiswatt/commit/ed6769e940dc205edc89363c36b79b583c08d887))
+
 ## [0.6.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.5.1...v0.6.0) (2026-07-12)
 
 
