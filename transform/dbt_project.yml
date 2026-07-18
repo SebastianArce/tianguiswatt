@@ -4,6 +4,11 @@ profile: tianguiswatt
 
 model-paths: ["models"]
 
+vars:
+  # Ofgem Typical Domestic Consumption Value, medium household electricity (kWh/year),
+  # July 2026 review.
+  tdcv_kwh: 2500
+
 models:
   tianguiswatt:
     staging:
