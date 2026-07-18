@@ -42,7 +42,9 @@ implied as (
 
 select
     months.month,
-    months.season,
+    -- explicit alias: ClickHouse would otherwise name the column literally
+    -- "months.season" (month resolves to its arrayJoin alias, season does not)
+    months.season as season,
     profile.day_type,
     profile.settlement_period,
     round(
