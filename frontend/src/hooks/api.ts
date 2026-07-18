@@ -118,3 +118,14 @@ export function useBatterySimulation(battery: '5kwh' | '10kwh' | '13.5kwh') {
     },
   })
 }
+
+export function useBatteryContext() {
+  return useQuery({
+    queryKey: ['battery-context'],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/battery/context')
+      if (error) throw error
+      return data
+    },
+  })
+}
