@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     accepted_actions,
+    battery,
     bid_stack,
     events,
     health,
@@ -63,4 +64,5 @@ app.include_router(bid_stack.router, prefix="/api")
 app.include_router(timeseries.router, prefix="/api")
 app.include_router(accepted_actions.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")
+app.include_router(battery.router, prefix="/api")
 app.include_router(events.router, prefix="/api")

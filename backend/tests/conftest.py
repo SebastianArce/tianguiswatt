@@ -28,6 +28,8 @@ _MART_TABLES = (
     "mart_metrics",
     "mart_accepted_actions",
     "mart_frequency",
+    "mart_tariff_periods",
+    "mart_domestic_profile",
 )
 
 
@@ -270,6 +272,49 @@ def _seed(ch: Client) -> None:
             "unit_name",
             "fuel_type",
         ],
+    )
+    ch.command(
+        "CREATE TABLE mart_tariff_periods "
+        "(from_ts DateTime, import_p_kwh Float64, export_p_kwh Float64, "
+        "intensity_gco2 Nullable(Int32)) ENGINE = MergeTree ORDER BY from_ts"
+    )
+    # Two full days (2026-06-29/30, both weekdays): cheap+green overnight (00–06 UTC),
+    # dear+dirty evening (16–19 UTC) — enough spread for every strategy to cycle.
+    # Timestamps stay UTC-aware: a naive insert would be read in the client's local
+    # timezone and shift the stored hours (see the mart_metrics note above).
+    tariff_rows = []
+    for day in (
+        dt.datetime(2026, 6, 29, tzinfo=dt.UTC),
+        dt.datetime(2026, 6, 30, tzinfo=dt.UTC),
+    ):
+        for half_hour in range(48):
+            ts = day + dt.timedelta(minutes=30 * half_hour)
+            if ts.hour < 6:
+                import_p, carbon = 10.0, 80
+            elif 16 <= ts.hour < 19:
+                import_p, carbon = 35.0, 250
+            else:
+                import_p, carbon = 22.0, 150
+            tariff_rows.append([ts, import_p, max(import_p - 8, 0.0), carbon])
+    ch.insert(
+        "mart_tariff_periods",
+        tariff_rows,
+        column_names=["from_ts", "import_p_kwh", "export_p_kwh", "intensity_gco2"],
+    )
+    ch.command(
+        "CREATE TABLE mart_domestic_profile "
+        "(month Int32, season String, day_type String, settlement_period Int32, "
+        "demand_kwh Float64) ENGINE = MergeTree ORDER BY (month, day_type, settlement_period)"
+    )
+    ch.insert(
+        "mart_domestic_profile",
+        [
+            # evening peak (SP 35–42) at 0.3 kWh, 0.1 kWh otherwise
+            [6, "summer", day_type, sp, 0.3 if 35 <= sp <= 42 else 0.1]
+            for day_type in ("weekday", "saturday", "sunday")
+            for sp in range(1, 49)
+        ],
+        column_names=["month", "season", "day_type", "settlement_period", "demand_kwh"],
     )
     ch.command(
         "CREATE TABLE mart_frequency (measured_at DateTime, frequency_hz Float64) "
