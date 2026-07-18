@@ -47,6 +47,8 @@ models:
     columns:
       - name: month
         tests: [not_null]
+      - name: season
+        tests: [not_null]
       - name: day_type
         tests: [not_null]
       - name: settlement_period
