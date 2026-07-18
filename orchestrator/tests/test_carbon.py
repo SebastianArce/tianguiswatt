@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import datetime as dt
 
+import httpx
+
 from shared.migrations.runner import migrate
 from orchestrator.assets import load_carbon_intensity
-from orchestrator.carbon import parse_carbon_intensity
+from orchestrator.carbon import fetch_carbon_intensity_range, parse_carbon_intensity
 
 SAMPLE: list[dict] = [
     {
@@ -38,6 +40,22 @@ def test_parse_carbon_intensity():
     assert first.intensity_index == "very high"
 
     assert records[1].actual_gco2 is None  # null actual flattened correctly
+
+
+def test_fetch_carbon_intensity_range_formats_url():
+    requested: list[httpx.URL] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(request.url)
+        return httpx.Response(200, json={"data": SAMPLE})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as mock_client:
+        rows = fetch_carbon_intensity_range(
+            "2025-07-01T00:00Z", "2025-07-15T00:00Z", client=mock_client
+        )
+
+    assert rows == SAMPLE
+    assert requested[0].path == "/intensity/2025-07-01T00:00Z/2025-07-15T00:00Z"
 
 
 def test_load_carbon_is_idempotent_and_revisable(client):
