@@ -1,0 +1,24 @@
+version: 2
+
+seeds:
+  - name: elexon_class1_profile
+    description: >
+      Elexon Profile Class 1 (domestic unrestricted) average half-hourly demand in kW,
+      by BSC season and day type — the regression profile that settled every
+      non-half-hourly-metered GB household until MHHS. Long-format reshape of
+      ProfileClass1.csv from the UKERC Energy Data Centre archive "Electricity user
+      load profiles by profile class" (Elexon, 1997 data; Open Access — "This data may
+      be freely used for any purpose"):
+      https://data.ceda.ac.uk/edc/d1/5af8ae29-86a7-4e8c-9fe4-1e2d99d9fb96
+      Settlement periods are numbered 1–48 from 00:00; the source labels rows by
+      period end. The 1997 demand *level* is stale; downstream models keep only the
+      *shape* and rescale to Ofgem's TDCV.
+    columns:
+      - name: season
+        tests: [not_null]
+      - name: day_type
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: demand_kw
+        tests: [not_null]

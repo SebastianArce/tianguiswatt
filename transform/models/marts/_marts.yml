@@ -39,6 +39,21 @@ models:
       - name: system_sell_price
         tests: [not_null]
 
+  - name: mart_domestic_profile
+    description: >
+      Typical household consumption (kWh) per half-hour by calendar month and day
+      type — Elexon Class 1 shape rescaled to the Ofgem TDCV. The battery
+      simulator's synthetic household.
+    columns:
+      - name: month
+        tests: [not_null]
+      - name: day_type
+        tests: [not_null]
+      - name: settlement_period
+        tests: [not_null]
+      - name: demand_kwh
+        tests: [not_null]
+
   - name: mart_tariff_periods
     description: >
       Agile import/export rates (p/kWh) + carbon intensity per half-hour — the
