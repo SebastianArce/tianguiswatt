@@ -12,6 +12,7 @@ from orchestrator.assets import (
     market_index_price,
     system_frequency,
     system_price,
+    tariff_rates,
 )
 from orchestrator.schedules import pipeline_schedule
 from orchestrator.transform import marts
@@ -27,6 +28,7 @@ defs = Definitions(
         bid_offer_acceptance,
         system_frequency,
         bmu_registry,
+        tariff_rates,
         marts,
     ],
     schedules=[pipeline_schedule],
