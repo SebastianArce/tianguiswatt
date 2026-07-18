@@ -60,3 +60,15 @@ automatically (needs DNS + port 80 open); first issuance takes a few seconds.
 - **Dagster UI** (internal, no auth): `ssh -L 3000:localhost:3000 deploy@tianguiswatt.com`,
   then open <http://localhost:3000>.
 - **Logs:** `docker compose -f compose.yml --profile prod logs -f <service>` on the VM.
+- **Backfills** (one-off, idempotent — rerunning is safe): the scheduled assets only ingest
+  the current day, so history must be loaded once per environment. On the VM, after the
+  migrate step has run:
+
+  ```bash
+  cd /opt/tianguiswatt
+  docker compose -f compose.yml --profile prod run --rm dagster-daemon python scripts/backfill_tariff_rates.py
+  docker compose -f compose.yml --profile prod run --rm dagster-daemon python scripts/backfill_carbon.py
+  ```
+
+  (`dagster-daemon` is the prod service running the orchestrator image; `run --rm` matches
+  how the deploy workflow executes one-offs.)
