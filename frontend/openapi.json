@@ -72,6 +72,180 @@
         "title": "AcceptedAction",
         "type": "object"
       },
+      "BatteryContext": {
+        "description": "Supporting stats for the Battery Lab explainer tab.",
+        "properties": {
+          "avg_export_p_kwh": {
+            "title": "Avg Export P Kwh",
+            "type": "number"
+          },
+          "avg_import_p_kwh": {
+            "title": "Avg Import P Kwh",
+            "type": "number"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "demand_profile": {
+            "items": {
+              "$ref": "#/components/schemas/DemandBucket"
+            },
+            "title": "Demand Profile",
+            "type": "array"
+          },
+          "export_tariff": {
+            "title": "Export Tariff",
+            "type": "string"
+          },
+          "green_overlap_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Green Overlap Pct"
+          },
+          "import_tariff": {
+            "title": "Import Tariff",
+            "type": "string"
+          },
+          "intraday": {
+            "items": {
+              "$ref": "#/components/schemas/PriceCarbonBucket"
+            },
+            "title": "Intraday",
+            "type": "array"
+          },
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/BatterySpec"
+            },
+            "title": "Presets",
+            "type": "array"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "tdcv_kwh": {
+            "title": "Tdcv Kwh",
+            "type": "integer"
+          },
+          "window_from": {
+            "format": "date",
+            "title": "Window From",
+            "type": "string"
+          },
+          "window_to": {
+            "format": "date",
+            "title": "Window To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "window_from",
+          "window_to",
+          "days",
+          "tdcv_kwh",
+          "import_tariff",
+          "export_tariff",
+          "region",
+          "avg_import_p_kwh",
+          "avg_export_p_kwh",
+          "green_overlap_pct",
+          "presets",
+          "intraday",
+          "demand_profile"
+        ],
+        "title": "BatteryContext",
+        "type": "object"
+      },
+      "BatterySimulation": {
+        "description": "All strategy runs for one battery preset, plus shared context.",
+        "properties": {
+          "baseline_cost_gbp_year": {
+            "title": "Baseline Cost Gbp Year",
+            "type": "number"
+          },
+          "battery": {
+            "$ref": "#/components/schemas/BatterySpec"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/StrategyRun"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "window_from": {
+            "format": "date",
+            "title": "Window From",
+            "type": "string"
+          },
+          "window_to": {
+            "format": "date",
+            "title": "Window To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "battery",
+          "window_from",
+          "window_to",
+          "days",
+          "baseline_cost_gbp_year",
+          "runs"
+        ],
+        "title": "BatterySimulation",
+        "type": "object"
+      },
+      "BatterySpec": {
+        "description": "A battery preset with an indicative installed cost (0% VAT, 2026 market).",
+        "properties": {
+          "capacity_kwh": {
+            "title": "Capacity Kwh",
+            "type": "number"
+          },
+          "cost_gbp": {
+            "title": "Cost Gbp",
+            "type": "number"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "power_kw": {
+            "title": "Power Kw",
+            "type": "number"
+          },
+          "round_trip_efficiency": {
+            "title": "Round Trip Efficiency",
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "capacity_kwh",
+          "power_kw",
+          "round_trip_efficiency",
+          "cost_gbp"
+        ],
+        "title": "BatterySpec",
+        "type": "object"
+      },
       "BidStack": {
         "description": "The balancing-mechanism offer stack for the latest settlement period, cheapest first.",
         "properties": {
@@ -213,6 +387,86 @@
           "intensity_index"
         ],
         "title": "CarbonPoint",
+        "type": "object"
+      },
+      "DemandBucket": {
+        "description": "Typical household demand in one settlement period (TDCV-scaled Elexon PC1).",
+        "properties": {
+          "avg_kwh": {
+            "title": "Avg Kwh",
+            "type": "number"
+          },
+          "settlement_period": {
+            "title": "Settlement Period",
+            "type": "integer"
+          },
+          "summer_weekday_kwh": {
+            "title": "Summer Weekday Kwh",
+            "type": "number"
+          },
+          "winter_weekday_kwh": {
+            "title": "Winter Weekday Kwh",
+            "type": "number"
+          }
+        },
+        "required": [
+          "settlement_period",
+          "avg_kwh",
+          "winter_weekday_kwh",
+          "summer_weekday_kwh"
+        ],
+        "title": "DemandBucket",
+        "type": "object"
+      },
+      "DispatchBucket": {
+        "description": "The battery's average behaviour in one settlement period across the window.",
+        "properties": {
+          "charge_kwh": {
+            "title": "Charge Kwh",
+            "type": "number"
+          },
+          "discharge_kwh": {
+            "title": "Discharge Kwh",
+            "type": "number"
+          },
+          "export_p_kwh": {
+            "title": "Export P Kwh",
+            "type": "number"
+          },
+          "import_p_kwh": {
+            "title": "Import P Kwh",
+            "type": "number"
+          },
+          "intensity_gco2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intensity Gco2"
+          },
+          "settlement_period": {
+            "title": "Settlement Period",
+            "type": "integer"
+          },
+          "soc_kwh": {
+            "title": "Soc Kwh",
+            "type": "number"
+          }
+        },
+        "required": [
+          "settlement_period",
+          "charge_kwh",
+          "discharge_kwh",
+          "soc_kwh",
+          "import_p_kwh",
+          "export_p_kwh",
+          "intensity_gco2"
+        ],
+        "title": "DispatchBucket",
         "type": "object"
       },
       "GenerationMixItem": {
@@ -368,6 +622,30 @@
         "title": "MetricProfile",
         "type": "object"
       },
+      "MonthlySaving": {
+        "properties": {
+          "carbon_saved_kg": {
+            "title": "Carbon Saved Kg",
+            "type": "number"
+          },
+          "month": {
+            "format": "date",
+            "title": "Month",
+            "type": "string"
+          },
+          "saving_gbp": {
+            "title": "Saving Gbp",
+            "type": "number"
+          }
+        },
+        "required": [
+          "month",
+          "saving_gbp",
+          "carbon_saved_kg"
+        ],
+        "title": "MonthlySaving",
+        "type": "object"
+      },
       "Price": {
         "properties": {
           "apx_price": {
@@ -413,6 +691,62 @@
           "n2ex_price"
         ],
         "title": "Price",
+        "type": "object"
+      },
+      "PriceCarbonBucket": {
+        "description": "Import-price distribution + typical export/carbon for one settlement period.",
+        "properties": {
+          "carbon_p50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carbon P50"
+          },
+          "export_p50": {
+            "title": "Export P50",
+            "type": "number"
+          },
+          "import_p10": {
+            "title": "Import P10",
+            "type": "number"
+          },
+          "import_p25": {
+            "title": "Import P25",
+            "type": "number"
+          },
+          "import_p50": {
+            "title": "Import P50",
+            "type": "number"
+          },
+          "import_p75": {
+            "title": "Import P75",
+            "type": "number"
+          },
+          "import_p90": {
+            "title": "Import P90",
+            "type": "number"
+          },
+          "settlement_period": {
+            "title": "Settlement Period",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "settlement_period",
+          "import_p10",
+          "import_p25",
+          "import_p50",
+          "import_p75",
+          "import_p90",
+          "export_p50",
+          "carbon_p50"
+        ],
+        "title": "PriceCarbonBucket",
         "type": "object"
       },
       "PricePoint": {
@@ -541,6 +875,73 @@
           "frequency_hz"
         ],
         "title": "Snapshot",
+        "type": "object"
+      },
+      "StrategyRun": {
+        "description": "One simulated (strategy \u00d7 optimizer) run over the window.",
+        "properties": {
+          "carbon_saved_kg_year": {
+            "title": "Carbon Saved Kg Year",
+            "type": "number"
+          },
+          "cycles": {
+            "title": "Cycles",
+            "type": "number"
+          },
+          "monthly": {
+            "items": {
+              "$ref": "#/components/schemas/MonthlySaving"
+            },
+            "title": "Monthly",
+            "type": "array"
+          },
+          "optimizer": {
+            "title": "Optimizer",
+            "type": "string"
+          },
+          "payback_years": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payback Years"
+          },
+          "saving_gbp": {
+            "title": "Saving Gbp",
+            "type": "number"
+          },
+          "saving_gbp_year": {
+            "title": "Saving Gbp Year",
+            "type": "number"
+          },
+          "strategy": {
+            "title": "Strategy",
+            "type": "string"
+          },
+          "typical_day": {
+            "items": {
+              "$ref": "#/components/schemas/DispatchBucket"
+            },
+            "title": "Typical Day",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strategy",
+          "optimizer",
+          "saving_gbp",
+          "saving_gbp_year",
+          "carbon_saved_kg_year",
+          "cycles",
+          "payback_years",
+          "typical_day",
+          "monthly"
+        ],
+        "title": "StrategyRun",
         "type": "object"
       },
       "SupplyDemand": {
@@ -755,6 +1156,109 @@
           }
         },
         "summary": "Accepted Actions"
+      }
+    },
+    "/api/battery/context": {
+      "get": {
+        "operationId": "battery_context_api_battery_context_get",
+        "parameters": [
+          {
+            "description": "Months of history to simulate.",
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "description": "Months of history to simulate.",
+              "maximum": 24,
+              "minimum": 1,
+              "title": "Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatteryContext"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Battery Context"
+      }
+    },
+    "/api/battery/simulation": {
+      "get": {
+        "operationId": "battery_simulation_api_battery_simulation_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "battery",
+            "required": false,
+            "schema": {
+              "default": "10kwh",
+              "enum": [
+                "5kwh",
+                "10kwh",
+                "13.5kwh"
+              ],
+              "title": "Battery",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Months of history to simulate.",
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "description": "Months of history to simulate.",
+              "maximum": 24,
+              "minimum": 1,
+              "title": "Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatterySimulation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Battery Simulation"
       }
     },
     "/api/bid-stack": {

@@ -21,6 +21,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/battery/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Battery Context */
+        get: operations["battery_context_api_battery_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/battery/simulation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Battery Simulation */
+        get: operations["battery_simulation_api_battery_simulation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bid-stack": {
         parameters: {
             query?: never;
@@ -227,6 +261,85 @@ export interface components {
             unit_name: string | null;
         };
         /**
+         * BatteryContext
+         * @description Supporting stats for the Battery Lab explainer tab.
+         */
+        BatteryContext: {
+            /** Avg Export P Kwh */
+            avg_export_p_kwh: number;
+            /** Avg Import P Kwh */
+            avg_import_p_kwh: number;
+            /** Days */
+            days: number;
+            /** Demand Profile */
+            demand_profile: components["schemas"]["DemandBucket"][];
+            /** Export Tariff */
+            export_tariff: string;
+            /** Green Overlap Pct */
+            green_overlap_pct: number | null;
+            /** Import Tariff */
+            import_tariff: string;
+            /** Intraday */
+            intraday: components["schemas"]["PriceCarbonBucket"][];
+            /** Presets */
+            presets: components["schemas"]["BatterySpec"][];
+            /** Region */
+            region: string;
+            /** Tdcv Kwh */
+            tdcv_kwh: number;
+            /**
+             * Window From
+             * Format: date
+             */
+            window_from: string;
+            /**
+             * Window To
+             * Format: date
+             */
+            window_to: string;
+        };
+        /**
+         * BatterySimulation
+         * @description All strategy runs for one battery preset, plus shared context.
+         */
+        BatterySimulation: {
+            /** Baseline Cost Gbp Year */
+            baseline_cost_gbp_year: number;
+            battery: components["schemas"]["BatterySpec"];
+            /** Days */
+            days: number;
+            /** Runs */
+            runs: components["schemas"]["StrategyRun"][];
+            /**
+             * Window From
+             * Format: date
+             */
+            window_from: string;
+            /**
+             * Window To
+             * Format: date
+             */
+            window_to: string;
+        };
+        /**
+         * BatterySpec
+         * @description A battery preset with an indicative installed cost (0% VAT, 2026 market).
+         */
+        BatterySpec: {
+            /** Capacity Kwh */
+            capacity_kwh: number;
+            /** Cost Gbp */
+            cost_gbp: number;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Power Kw */
+            power_kw: number;
+            /** Round Trip Efficiency */
+            round_trip_efficiency: number;
+        };
+        /**
          * BidStack
          * @description The balancing-mechanism offer stack for the latest settlement period, cheapest first.
          */
@@ -274,6 +387,40 @@ export interface components {
             intensity_gco2: number | null;
             /** Intensity Index */
             intensity_index: string;
+        };
+        /**
+         * DemandBucket
+         * @description Typical household demand in one settlement period (TDCV-scaled Elexon PC1).
+         */
+        DemandBucket: {
+            /** Avg Kwh */
+            avg_kwh: number;
+            /** Settlement Period */
+            settlement_period: number;
+            /** Summer Weekday Kwh */
+            summer_weekday_kwh: number;
+            /** Winter Weekday Kwh */
+            winter_weekday_kwh: number;
+        };
+        /**
+         * DispatchBucket
+         * @description The battery's average behaviour in one settlement period across the window.
+         */
+        DispatchBucket: {
+            /** Charge Kwh */
+            charge_kwh: number;
+            /** Discharge Kwh */
+            discharge_kwh: number;
+            /** Export P Kwh */
+            export_p_kwh: number;
+            /** Import P Kwh */
+            import_p_kwh: number;
+            /** Intensity Gco2 */
+            intensity_gco2: number | null;
+            /** Settlement Period */
+            settlement_period: number;
+            /** Soc Kwh */
+            soc_kwh: number;
         };
         /** GenerationMixItem */
         GenerationMixItem: {
@@ -335,6 +482,18 @@ export interface components {
             /** Weekly */
             weekly: components["schemas"]["WeekdayHourCell"][];
         };
+        /** MonthlySaving */
+        MonthlySaving: {
+            /** Carbon Saved Kg */
+            carbon_saved_kg: number;
+            /**
+             * Month
+             * Format: date
+             */
+            month: string;
+            /** Saving Gbp */
+            saving_gbp: number;
+        };
         /** Price */
         Price: {
             /** Apx Price */
@@ -347,6 +506,28 @@ export interface components {
             settlement_period: number;
             /** System Price */
             system_price: number;
+        };
+        /**
+         * PriceCarbonBucket
+         * @description Import-price distribution + typical export/carbon for one settlement period.
+         */
+        PriceCarbonBucket: {
+            /** Carbon P50 */
+            carbon_p50: number | null;
+            /** Export P50 */
+            export_p50: number;
+            /** Import P10 */
+            import_p10: number;
+            /** Import P25 */
+            import_p25: number;
+            /** Import P50 */
+            import_p50: number;
+            /** Import P75 */
+            import_p75: number;
+            /** Import P90 */
+            import_p90: number;
+            /** Settlement Period */
+            settlement_period: number;
         };
         /** PricePoint */
         PricePoint: {
@@ -380,6 +561,30 @@ export interface components {
             measured_at: string | null;
             price: components["schemas"]["Price"] | null;
             supply_demand: components["schemas"]["SupplyDemand"] | null;
+        };
+        /**
+         * StrategyRun
+         * @description One simulated (strategy × optimizer) run over the window.
+         */
+        StrategyRun: {
+            /** Carbon Saved Kg Year */
+            carbon_saved_kg_year: number;
+            /** Cycles */
+            cycles: number;
+            /** Monthly */
+            monthly: components["schemas"]["MonthlySaving"][];
+            /** Optimizer */
+            optimizer: string;
+            /** Payback Years */
+            payback_years: number | null;
+            /** Saving Gbp */
+            saving_gbp: number;
+            /** Saving Gbp Year */
+            saving_gbp_year: number;
+            /** Strategy */
+            strategy: string;
+            /** Typical Day */
+            typical_day: components["schemas"]["DispatchBucket"][];
         };
         /** SupplyDemand */
         SupplyDemand: {
@@ -468,6 +673,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcceptedAction"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    battery_context_api_battery_context_get: {
+        parameters: {
+            query?: {
+                /** @description Months of history to simulate. */
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatteryContext"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    battery_simulation_api_battery_simulation_get: {
+        parameters: {
+            query?: {
+                battery?: "5kwh" | "10kwh" | "13.5kwh";
+                /** @description Months of history to simulate. */
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatterySimulation"];
                 };
             };
             /** @description Validation Error */

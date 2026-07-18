@@ -136,3 +136,102 @@ class AcceptedAction(BaseModel):
     level_from: float
     level_to: float
     so_flag: bool
+
+
+# --- battery lab ---
+
+
+class BatterySpec(BaseModel):
+    """A battery preset with an indicative installed cost (0% VAT, 2026 market)."""
+
+    key: str
+    name: str
+    capacity_kwh: float
+    power_kw: float
+    round_trip_efficiency: float
+    cost_gbp: float
+
+
+class DispatchBucket(BaseModel):
+    """The battery's average behaviour in one settlement period across the window."""
+
+    settlement_period: int
+    charge_kwh: float
+    discharge_kwh: float
+    soc_kwh: float
+    import_p_kwh: float
+    export_p_kwh: float
+    intensity_gco2: float | None
+
+
+class MonthlySaving(BaseModel):
+    month: dt.date  # first day of the month, local time
+    saving_gbp: float
+    carbon_saved_kg: float
+
+
+class StrategyRun(BaseModel):
+    """One simulated (strategy × optimizer) run over the window."""
+
+    strategy: str  # arbitrage | self_consumption | green
+    optimizer: str  # greedy | lp
+    saving_gbp: float  # over the simulated window
+    saving_gbp_year: float  # annualised
+    carbon_saved_kg_year: float
+    cycles: float  # equivalent full cycles over the window
+    payback_years: float | None  # None when the strategy loses money
+    typical_day: list[DispatchBucket]
+    monthly: list[MonthlySaving]
+
+
+class BatterySimulation(BaseModel):
+    """All strategy runs for one battery preset, plus shared context."""
+
+    battery: BatterySpec
+    window_from: dt.date
+    window_to: dt.date
+    days: int
+    baseline_cost_gbp_year: float  # the household's import bill with no battery
+    runs: list[StrategyRun]
+
+
+class PriceCarbonBucket(BaseModel):
+    """Import-price distribution + typical export/carbon for one settlement period."""
+
+    settlement_period: int
+    import_p10: float
+    import_p25: float
+    import_p50: float
+    import_p75: float
+    import_p90: float
+    export_p50: float
+    carbon_p50: float | None
+
+
+class DemandBucket(BaseModel):
+    """Typical household demand in one settlement period (TDCV-scaled Elexon PC1)."""
+
+    settlement_period: int
+    avg_kwh: float
+    winter_weekday_kwh: float
+    summer_weekday_kwh: float
+
+
+class BatteryContext(BaseModel):
+    """Supporting stats for the Battery Lab explainer tab."""
+
+    window_from: dt.date
+    window_to: dt.date
+    days: int
+    tdcv_kwh: int
+    import_tariff: str
+    export_tariff: str
+    region: str
+    avg_import_p_kwh: float
+    avg_export_p_kwh: float
+    green_overlap_pct: (
+        float | None
+    )  # how often the greenest 8 half-hours are also the cheapest 8
+    presets: list[BatterySpec]
+    intraday: list[PriceCarbonBucket]
+    demand_profile: list[DemandBucket]
