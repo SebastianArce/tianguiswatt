@@ -29,5 +29,7 @@ COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/orchestrator /app/orchestrator
 COPY --from=builder /app/packages /app/packages
 COPY transform ./transform
+# one-off operational scripts (backfills) runnable via `docker compose exec orchestrator`
+COPY scripts ./scripts
 COPY orchestrator/dagster.yaml /app/dagster_home/dagster.yaml
 CMD ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-m", "orchestrator.definitions"]
