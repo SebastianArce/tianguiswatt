@@ -27,6 +27,10 @@ in **[docs/architecture.md](docs/architecture.md)**.
   actions the system operator accepted highlighted.
 - **Trends** — how demand, generation, price and carbon *typically* behave: intraday percentile
   bands and a weekday × hour heatmap, from ClickHouse quantile aggregations.
+- **Battery Lab** — a home-battery backtest against real Agile tariff rates and carbon
+  intensity: arbitrage vs self-consumption vs green charging, a simple timer vs an LP
+  optimiser, payback per battery size — plus a methodology tab explaining why the
+  numbers come out the way they do.
 - **Learn** — a short explainer of how the GB marginal-price market sets a price.
 
 Data updates are pushed to the browser over Server-Sent Events as each cycle lands, and a

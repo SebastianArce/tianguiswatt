@@ -1,5 +1,6 @@
 import type { EChartsOption } from 'echarts'
 import { useMemo, useState } from 'react'
+import { BatteryHowItWorks } from '@/components/BatteryHowItWorks'
 import { useBatterySimulation } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
 import { useChartTheme } from '@/lib/theme'
@@ -257,10 +258,7 @@ export function BatteryLabPage() {
       </div>
 
       {tab === 'how' ? (
-        <p className="max-w-2xl text-sm leading-relaxed text-slate">
-          The methodology deep-dive — how Agile pricing works, why cheapest ≠ greenest,
-          and what the optimiser actually solves — lands here shortly.
-        </p>
+        <BatteryHowItWorks preset={preset} />
       ) : (
         <>
           <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3">

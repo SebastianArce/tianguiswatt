@@ -47,13 +47,50 @@ const SIMULATION = {
   ],
 }
 
-test('battery lab compares strategies', async ({ page }) => {
+const CONTEXT = {
+  window_from: '2025-07-18',
+  window_to: '2026-07-18',
+  days: 365,
+  tdcv_kwh: 2500,
+  import_tariff: 'E-1R-AGILE-24-10-01-C',
+  export_tariff: 'E-1R-AGILE-OUTGOING-19-05-13-C',
+  region: 'London (C)',
+  avg_import_p_kwh: 18.26,
+  avg_export_p_kwh: 10.06,
+  green_overlap_pct: 55.9,
+  presets: [BATTERY],
+  intraday: Array.from({ length: 48 }, (_, i) => ({
+    settlement_period: i + 1,
+    import_p10: 8,
+    import_p25: 11,
+    import_p50: i >= 34 && i < 40 ? 30 : 15,
+    import_p75: 20,
+    import_p90: 28,
+    export_p50: 9,
+    carbon_p50: i < 12 ? 90 : 170,
+  })),
+  demand_profile: Array.from({ length: 48 }, (_, i) => ({
+    settlement_period: i + 1,
+    avg_kwh: 0.14,
+    winter_weekday_kwh: 0.2,
+    summer_weekday_kwh: 0.1,
+  })),
+}
+
+async function mockBatteryApi(page: import('@playwright/test').Page) {
   await page.route('**/api/battery/simulation*', (route) =>
     route.fulfill({ json: SIMULATION }),
+  )
+  await page.route('**/api/battery/context*', (route) =>
+    route.fulfill({ json: CONTEXT }),
   )
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
+}
+
+test('battery lab compares strategies', async ({ page }) => {
+  await mockBatteryApi(page)
   await page.goto('/battery')
 
   await expect(page.getByRole('heading', { name: 'Battery Lab' })).toBeVisible()
@@ -80,9 +117,36 @@ test('battery lab compares strategies', async ({ page }) => {
   await page.getByRole('button', { name: '5 kWh', exact: true }).click()
   await request
 
-  // the how-it-works tab exists (content lands in a follow-up)
+  // the how-it-works tab renders the explainer
   await page.getByRole('tab', { name: 'How it works' }).click()
-  await expect(page.getByText(/methodology deep-dive/i)).toBeVisible()
+  await expect(page.getByText('18.26p', { exact: true })).toBeVisible()
+})
+
+test('how-it-works tab explains the methodology', async ({ page }) => {
+  await mockBatteryApi(page)
+  await page.goto('/battery')
+  await page.getByRole('tab', { name: 'How it works' }).click()
+
+  // headline stats
+  await expect(page.getByText('18.26p', { exact: true })).toBeVisible()
+  await expect(page.getByText('10.06p', { exact: true })).toBeVisible()
+  await expect(page.getByText('56%', { exact: true })).toBeVisible()
+  await expect(page.getByText('2,500 kWh', { exact: true })).toBeVisible()
+  await expect(page.getByText(/E-1R-AGILE-24-10-01-C/)).toBeVisible()
+
+  // the four explainer sections
+  await expect(
+    page.getByRole('heading', { name: /the price a household can actually trade/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /the household being simulated/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /cheapest is not greenest/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /why the optimiser earns more/i }),
+  ).toBeVisible()
 })
 
 test('nav reaches the battery lab', async ({ page }) => {
