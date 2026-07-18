@@ -9,6 +9,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "pydantic-settings>=2.12.0",
     "shared",
+    "scipy>=1.18.0",
 ]
 
 [tool.uv.sources]
