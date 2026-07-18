@@ -16,6 +16,7 @@ from orchestrator.assets import (
     market_index_price,
     system_frequency,
     system_price,
+    tariff_rates,
 )
 
 
@@ -39,6 +40,7 @@ def _dbt_project_dir() -> Path:
         bid_offer_acceptance,
         system_frequency,
         bmu_registry,
+        tariff_rates,
     ],
     description="dbt staging + marts, built from raw.* (runs `dbt build`).",
 )
