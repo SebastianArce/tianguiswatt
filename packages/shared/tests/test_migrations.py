@@ -134,6 +134,14 @@ def test_market_index_price_keeps_a_row_per_provider(client):
     assert apx == [(110.0,)]
 
 
+def test_migrate_creates_tariff_rate_table(client):
+    migrate(client)
+    exists = client.query(
+        "SELECT count() FROM system.tables WHERE database='raw' AND name='tariff_rate'"
+    ).result_rows[0][0]
+    assert exists == 1
+
+
 def test_migrate_creates_bid_offer_tables(client):
     migrate(client)
     for tbl in ("bid_offer", "bid_offer_acceptance"):

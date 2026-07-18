@@ -19,8 +19,16 @@ from shared.models import (
     FuelInstRecord,
     MarketIndexPriceRecord,
     SystemPriceRecord,
+    TariffRateRecord,
 )
 from orchestrator.carbon import fetch_carbon_intensity, parse_carbon_intensity
+from orchestrator.octopus import (
+    EXPORT_PRODUCT,
+    IMPORT_PRODUCT,
+    fetch_tariff_rates,
+    parse_tariff_rates,
+    tariff_code,
+)
 from orchestrator.elexon import (
     fetch_bid_offer,
     fetch_bid_offer_acceptances,
@@ -90,6 +98,16 @@ MID_COLUMNS = [
     "data_provider",
     "price",
     "volume",
+    "ingest_version",
+]
+
+TARIFF_RATE_TABLE = "raw.tariff_rate"
+TARIFF_RATE_COLUMNS = [
+    "tariff_code",
+    "valid_from",
+    "valid_to",
+    "value_exc_vat",
+    "value_inc_vat",
     "ingest_version",
 ]
 
@@ -242,6 +260,25 @@ def load_market_index_price(
         for r in records
     ]
     client.insert(MID_TABLE, rows, column_names=MID_COLUMNS)
+    return len(rows)
+
+
+def load_tariff_rates(
+    client: Client, records: list[TariffRateRecord], ingest_version: int
+) -> int:
+    """Insert tariff-rate records tagged with an ingest version."""
+    rows = [
+        [
+            r.tariff_code,
+            r.valid_from,
+            r.valid_to,
+            r.value_exc_vat,
+            r.value_inc_vat,
+            ingest_version,
+        ]
+        for r in records
+    ]
+    client.insert(TARIFF_RATE_TABLE, rows, column_names=TARIFF_RATE_COLUMNS)
     return len(rows)
 
 
@@ -407,6 +444,35 @@ def market_index_price(context: AssetExecutionContext) -> MaterializeResult:
     finally:
         client.close()
     context.log.info(f"Ingested {rows} MID rows (ingest_version={ingest_version})")
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+@asset(
+    description="Octopus Agile import/export half-hourly tariff rates (Octopus API)."
+)
+def tariff_rates(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch yesterday→tomorrow rates for both Agile tariffs and load into raw."""
+    now = dt.datetime.now(tz=dt.UTC)
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    period_from = (now - dt.timedelta(days=1)).strftime(fmt)
+    # Tomorrow's 48 rates appear ~16:00 today; the +2d bound picks them up as published.
+    period_to = (now + dt.timedelta(days=2)).strftime(fmt)
+    records = [
+        record
+        for product in (IMPORT_PRODUCT, EXPORT_PRODUCT)
+        for record in parse_tariff_rates(
+            fetch_tariff_rates(product, period_from, period_to), tariff_code(product)
+        )
+    ]
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_tariff_rates(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(
+        f"Ingested {rows} tariff-rate rows (ingest_version={ingest_version})"
+    )
     return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
 
 
