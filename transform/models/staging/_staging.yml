@@ -77,6 +77,16 @@ models:
       - name: frequency_hz
         tests: [not_null]
 
+  - name: stg_tariff_rate
+    description: Deduplicated Octopus tariff unit rates per tariff code and half-hour.
+    columns:
+      - name: tariff_code
+        tests: [not_null]
+      - name: valid_from
+        tests: [not_null]
+      - name: value_inc_vat
+        tests: [not_null]
+
   - name: stg_bmu_registry
     description: BMU registry deduplicated to one row per National Grid BMU id.
     columns:
