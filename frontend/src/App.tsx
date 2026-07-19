@@ -4,16 +4,18 @@ import { RootLayout } from '@/components/RootLayout'
 import { BatteryLabPage } from '@/pages/BatteryLabPage'
 import { BidStackPage } from '@/pages/BidStackPage'
 import { ExplorePage } from '@/pages/ExplorePage'
-import { HomePage } from '@/pages/HomePage'
+import { LivePage } from '@/pages/LivePage'
 import { LearnPage } from '@/pages/LearnPage'
+import { StoryPage } from '@/pages/StoryPage'
 import { TrendsPage } from '@/pages/TrendsPage'
 
 export default function App() {
   return (
     <Routes>
       <Route element={<RootLayout />}>
+        <Route index element={<StoryPage />} />
         <Route element={<ContainedLayout />}>
-          <Route index element={<HomePage />} />
+          <Route path="live" element={<LivePage />} />
           <Route path="explore" element={<ExplorePage />} />
           <Route path="bid-stack" element={<BidStackPage />} />
           <Route path="trends" element={<TrendsPage />} />

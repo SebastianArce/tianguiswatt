@@ -133,3 +133,14 @@ export function useBatteryContext() {
     },
   })
 }
+
+export function useStory() {
+  return useQuery({
+    queryKey: ['story'],
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/story')
+      if (error) throw error
+      return data
+    },
+  })
+}
