@@ -1,12 +1,12 @@
 # TianguisWatt
 
-> Analytics for the GB electricity market — generation, demand, carbon, prices, and the
-> balancing mechanism — from source APIs to an interactive dashboard, updated in step with the
-> market's half-hourly settlement periods.
+> The GB electricity market, live — and a data-built argument for the power station
+> hiding in people's homes. From source APIs to an interactive narrative, updated in
+> step with the market's half-hourly settlement periods.
 
 **Live → [tianguiswatt.com](https://tianguiswatt.com)**
 
-![The TianguisWatt control-room dashboard](docs/images/dashboard.png)
+![The TianguisWatt narrative front page](docs/images/story.png)
 
 TianguisWatt ingests data from the Great Britain power grid every 15 minutes, transforms
 it in a **ClickHouse** warehouse with **dbt**, and serves it through a **FastAPI** backend to an
@@ -19,8 +19,15 @@ in **[docs/architecture.md](docs/architecture.md)**.
 
 ## What it shows
 
-- **Control room** — the generation mix over the last 24h, interconnector flows, system frequency,
-  carbon intensity, price, net imbalance, and the balancing actions NESO most recently accepted.
+- **The story** — the front page: a six-move narrative from "electricity has a
+  different price every thirty minutes" to "a quarter of a million orchestrated home
+  batteries is a power station", every claim backed by the project's own backtested
+  data — the retail wedge, a one-home battery configurator, a fleet-scale slider drawn
+  against the real national demand curve, and what the balancing market actually pays
+  for peak flexibility.
+- **Live grid** — the control room: generation mix over the last 24h, interconnector
+  flows, system frequency, carbon intensity, price, net imbalance, and the balancing
+  actions NESO most recently accepted.
 - **Explore** — any core metric over a chosen window and granularity (per-settlement-period to
   daily), aggregated server-side in ClickHouse.
 - **Bid stack** — the balancing-mechanism offer stack (merit order), cheapest-first, with the

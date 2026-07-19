@@ -17,6 +17,16 @@ const NAV = [
 
 const REPO_URL = 'https://github.com/SebastianArce/tianguiswatt'
 
+const TITLES: Record<string, string> = {
+  '/': 'TianguisWatt — the GB grid, and the power station hiding in people\'s homes',
+  '/live': 'Live grid · TianguisWatt',
+  '/battery': 'Battery Lab · TianguisWatt',
+  '/bid-stack': 'Bid stack · TianguisWatt',
+  '/trends': 'Trends · TianguisWatt',
+  '/explore': 'Explore · TianguisWatt',
+  '/learn': 'Learn · TianguisWatt',
+}
+
 /** Link to the open-source repo — the project is a portfolio piece. */
 function GitHubLink() {
   return (
@@ -92,6 +102,10 @@ export function RootLayout() {
 
   // close the drawer whenever the route changes
   useEffect(() => setMenuOpen(false), [location.pathname])
+
+  useEffect(() => {
+    document.title = TITLES[location.pathname] ?? 'TianguisWatt'
+  }, [location.pathname])
 
   // while the drawer is open: close on Escape + lock background scroll
   useEffect(() => {
