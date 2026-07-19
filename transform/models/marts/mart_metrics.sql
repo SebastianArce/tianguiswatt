@@ -12,10 +12,14 @@
 ] %}
 
 {% for name, mart, value, bucket in metrics %}
+-- sp granularity groups too: on the long clock-change day (50 settlement periods)
+-- periods 49-50 share a wall-clock label with the next day's 1-2, so a plain select
+-- would violate the (metric, granularity, bucket) grain once a year.
 select '{{ name }}' as metric, 'sp' as granularity,
-    {{ bucket }} as bucket, toFloat64({{ value }}) as value
+    {{ bucket }} as bucket, avg(toFloat64({{ value }})) as value
 from {{ ref(mart) }}
 where {{ value }} is not null
+group by bucket
 union all
 select '{{ name }}', 'hour', toStartOfHour({{ bucket }}), avg(toFloat64({{ value }}))
 from {{ ref(mart) }}
