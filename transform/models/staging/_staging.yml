@@ -87,6 +87,12 @@ models:
       - name: value_inc_vat
         tests: [not_null]
 
+  - name: stg_solar_generation
+    description: Deduplicated PV_Live national solar outturn per half-hour (period start).
+    columns:
+      - name: from_ts
+        tests: [not_null, unique]
+
   - name: stg_bmu_registry
     description: BMU registry deduplicated to one row per National Grid BMU id.
     columns:
