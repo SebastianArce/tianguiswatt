@@ -301,6 +301,9 @@ export function BatteryHowItWorks({
 
   // The chart containers must exist on first render (useECharts initialises on
   // mount), so there is no early return while the data loads — text falls back.
+  const sample = ctx
+    ? `${ctx.periods.toLocaleString()} half-hours over ${ctx.days} days`
+    : ''
   const avgImport = ctx ? `${ctx.avg_import_p_kwh}p` : '—'
   const avgExport = ctx ? `${ctx.avg_export_p_kwh}p` : '—'
   const overlap =
@@ -329,8 +332,9 @@ export function BatteryHowItWorks({
       </div>
       {ctx && (
         <p className="mt-3 text-xs leading-relaxed text-muted">
-          Backtest window {ctx.window_from} → {ctx.window_to} · tariffs {ctx.import_tariff}{' '}
-          (import) and {ctx.export_tariff} (export) · region {ctx.region}. Half-hours are{' '}
+          Everything on this page is computed from <b>{sample}</b> ({ctx.window_from} →{' '}
+          {ctx.window_to}) · tariffs {ctx.import_tariff} (import) and {ctx.export_tariff}{' '}
+          (export) · region {ctx.region}. Half-hours are{' '}
           <Term title="The 30-minute periods the GB market prices and settles against, numbered 1–48 from midnight local time.">
             settlement periods
           </Term>{' '}
@@ -340,7 +344,7 @@ export function BatteryHowItWorks({
 
       <ChartSection
         title="The price a household can actually trade"
-        caption="Median import rate with its p10–p90 and p25–p75 spread, and the median export rate, by half-hour. The gap between the solid and dashed lines — minus the battery's ~10% round-trip loss — is all pure arbitrage can earn."
+        caption={`Median import rate with its p10–p90 and p25–p75 spread, and the median export rate, by half-hour — each point summarises ${ctx?.days ?? '…'} observed days. The gap between the solid and dashed lines, minus the battery's ~10% round-trip loss, is all pure arbitrage can earn.`}
         chartRef={priceRef}
       >
         <p>
@@ -363,7 +367,7 @@ export function BatteryHowItWorks({
 
       <ChartSection
         title="The household being simulated"
-        caption="Expected consumption per half-hour: Elexon's domestic settlement profile (Profile Class 1), rescaled so a year totals Ofgem's 2,500 kWh typical value."
+        caption="Expected consumption per half-hour: Elexon's domestic settlement profile (Profile Class 1), rescaled so a year totals Ofgem's 2,500 kWh typical value. A statistical profile, not measured smart-meter data — the one input here that is not from the backtest window."
         chartRef={demandRef}
       >
         <p>
@@ -382,7 +386,7 @@ export function BatteryHowItWorks({
 
       <ChartSection
         title="Cheapest is not greenest"
-        caption="Median import price (top) and grid carbon intensity (bottom) by half-hour, on one shared clock. Aligned troughs mean the two objectives agree; where they part is what the green strategy pays for."
+        caption={`Median import price (top) and grid carbon intensity (bottom) by half-hour across ${ctx?.days ?? '…'} days, on one shared clock. Aligned troughs mean the two objectives agree; where they part is what the green strategy pays for.`}
         chartRef={divergenceRef}
         height="h-[340px]"
       >
@@ -402,7 +406,7 @@ export function BatteryHowItWorks({
 
       <ChartSection
         title="Why the optimiser earns more"
-        caption="Annualised savings per strategy: the cheapest-window timer versus the linear-programming optimiser, on identical data and hardware."
+        caption={`Annualised savings per strategy: the cheapest-window timer versus the linear-programming optimiser, on identical data and hardware — every bar is a full dispatch simulation over the same ${sim ? sim.periods.toLocaleString() : '…'} half-hours.`}
         chartRef={optimiserRef}
         height="h-[260px]"
       >

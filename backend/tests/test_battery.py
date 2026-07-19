@@ -31,6 +31,7 @@ def test_simulation_runs_all_strategies(ch_client):
 
     assert body["battery"]["capacity_kwh"] == 10
     assert body["days"] == 2
+    assert body["periods"] == 96  # 2 seeded days × 48 half-hours
     assert body["baseline_cost_gbp_year"] > 0
     assert {(r["strategy"], r["optimizer"]) for r in body["runs"]} == {
         (s, o)
