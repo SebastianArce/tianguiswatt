@@ -195,12 +195,11 @@ export function RootLayout() {
 
       <ConnectionBanner />
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        {/* keyed by route so navigating away recovers from a page error */}
-        <ErrorBoundary key={location.pathname}>
-          <Outlet />
-        </ErrorBoundary>
-      </main>
+      {/* keyed by route so navigating away recovers from a page error; the width
+          cage lives in ContainedLayout so a route can opt into full-bleed */}
+      <ErrorBoundary key={location.pathname}>
+        <Outlet />
+      </ErrorBoundary>
     </div>
   )
 }
