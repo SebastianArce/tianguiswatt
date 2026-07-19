@@ -65,6 +65,12 @@ automatically (needs DNS + port 80 open); first issuance takes a few seconds.
   migrate step has run:
 
   ```bash
-  docker compose -f compose.yml --profile prod exec orchestrator python scripts/backfill_tariff_rates.py
-  docker compose -f compose.yml --profile prod exec orchestrator python scripts/backfill_carbon.py
+  cd /opt/tianguiswatt
+  docker compose -f compose.yml --profile prod exec dagster-daemon python scripts/backfill_tariff_rates.py
+  docker compose -f compose.yml --profile prod exec dagster-daemon python scripts/backfill_carbon.py
   ```
+
+  (`dagster-daemon` is the prod service running the orchestrator image — there is no
+  `orchestrator` service in the prod profile. Use `exec`, not `run --rm`: `run`
+  re-resolves the image and, without `IMAGE_TAG` set and a fresh GHCR login, tries to
+  pull `:latest` and gets denied. `exec` uses the already-running container.)
