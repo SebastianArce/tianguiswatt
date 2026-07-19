@@ -15,6 +15,12 @@ day dispatch is a deterministic optimisation, not a forecasting problem.
 
 The green strategy runs the same machinery with gCO₂/kWh as the objective (plus a tiny
 price tie-break so equally-green half-hours prefer the cheaper one).
+
+Solar (behind the meter) enters as a per-period surplus the battery may store instead
+of exporting. Against the "same house with solar, no battery" baseline, storing
+surplus costs exactly its forgone export value — money or carbon — so the solar-charge
+cost vector is the existing discharge-export value vector in every strategy. With no
+generation everything reduces to the plain formulation.
 """
 
 from __future__ import annotations
@@ -128,22 +134,30 @@ def _greedy_day(
     dispatch: list[Dispatch] = []
     soc = min(soc0, battery.capacity_kwh)
     for t, p in enumerate(day):
-        charge = home = export = 0.0
-        if t in charge_set and soc < battery.capacity_kwh:
-            charge = min(e, (battery.capacity_kwh - soc) / eta)
+        charge = solar_charge = home = export = 0.0
+        # Store surplus first, unconditionally — the store-first behaviour real
+        # batteries ship with. Greedy never weighs export-now against discharge-later;
+        # that gap (largest on sunny days) is exactly what the LP comparison shows.
+        if p.surplus_kwh > _EPS and soc < battery.capacity_kwh:
+            solar_charge = min(p.surplus_kwh, e, (battery.capacity_kwh - soc) / eta)
+            soc += solar_charge * eta
+        budget = e - solar_charge
+        if t in charge_set and soc < battery.capacity_kwh and budget > _EPS:
+            charge = min(budget, (battery.capacity_kwh - soc) / eta)
             soc += charge * eta
-        budget = e - charge
+            budget -= charge
         if t in discharge_set and budget > _EPS and soc > _EPS:
             if strategy is Strategy.ARBITRAGE:
                 export = min(budget, soc)
                 soc -= export
             else:
-                home = min(budget, soc, p.demand_kwh)
+                home = min(budget, soc, p.net_demand_kwh)
                 soc -= home
         dispatch.append(
             Dispatch(
                 period=p,
                 charge_kwh=charge,
+                charge_solar_kwh=solar_charge,
                 discharge_home_kwh=home,
                 discharge_export_kwh=export,
                 soc_kwh=soc,
@@ -159,19 +173,28 @@ def _greedy_day(
 def _constraint_matrices(t_periods: int, eta: float):
     """Sparse constraints for a horizon of `t_periods`.
 
-    Variables are [charge, home, export, soc] × T. Equality rows encode the SoC
-    dynamics `soc_t − soc_{t−1} − η·charge_t + home_t + export_t = 0` (banded, so the
-    LP stays sparse instead of the dense cumulative-sum formulation); inequality rows
-    encode the per-period power budget `charge + home + export ≤ e`. Capacity becomes
-    a plain variable bound on soc.
+    Variables are [charge, solar_charge, home, export, soc] × T. Equality rows encode
+    the SoC dynamics `soc_t − soc_{t−1} − η·(charge_t + solar_t) + home_t + export_t
+    = 0` (banded, so the LP stays sparse instead of the dense cumulative-sum
+    formulation); inequality rows encode the shared inverter budget `charge + solar +
+    home + export ≤ e`. Capacity becomes a plain variable bound on soc; solar
+    availability is purely a bound on the solar block.
     """
     identity = sparse.identity(t_periods, format="csr")
     soc_step = sparse.diags_array(
         [1.0, -1.0], offsets=[0, -1], shape=(t_periods, t_periods)
     )
-    a_eq = sparse.hstack([-eta * identity, identity, identity, soc_step], format="csr")
+    a_eq = sparse.hstack(
+        [-eta * identity, -eta * identity, identity, identity, soc_step], format="csr"
+    )
     a_ub = sparse.hstack(
-        [identity, identity, identity, sparse.csr_matrix((t_periods, t_periods))],
+        [
+            identity,
+            identity,
+            identity,
+            identity,
+            sparse.csr_matrix((t_periods, t_periods)),
+        ],
         format="csr",
     )
     return a_eq, a_ub
@@ -192,15 +215,21 @@ def _lp_day(
 
     charge_w = np.array(_charge_weights(horizon, strategy))
     home_w, export_w = (np.array(w) for w in _discharge_weights(horizon, strategy))
-    # linprog minimises; savings = home·w_home + export·w_export − charge·w_charge.
+    # linprog minimises; savings = home·w_home + export·w_export − charge·w_charge
+    # − solar_charge·w_export (storing surplus forgoes its export value — the same
+    # vector that prices discharge-export, in money and in carbon alike).
     # SoC variables carry no cost.
-    objective = np.concatenate([charge_w, -home_w, -export_w, np.zeros(t_periods)])
+    objective = np.concatenate(
+        [charge_w, export_w, -home_w, -export_w, np.zeros(t_periods)]
+    )
 
     home_cap = [
-        0.0 if strategy is Strategy.ARBITRAGE else min(e, p.demand_kwh) for p in horizon
+        0.0 if strategy is Strategy.ARBITRAGE else min(e, p.net_demand_kwh)
+        for p in horizon
     ]
     bounds = (
         [(0.0, e)] * t_periods
+        + [(0.0, min(e, p.surplus_kwh)) for p in horizon]
         + [(0.0, cap) for cap in home_cap]
         + [(0.0, e)] * t_periods
         + [(0.0, battery.capacity_kwh)] * t_periods
@@ -221,17 +250,19 @@ def _lp_day(
         raise RuntimeError(f"battery dispatch LP failed: {result.message}")
 
     x = np.where(np.abs(result.x) < _EPS, 0.0, result.x)
-    charge, home, export, soc = (
+    charge, solar, home, export, soc = (
         x[:t_periods],
         x[t_periods : 2 * t_periods],
         x[2 * t_periods : 3 * t_periods],
-        x[3 * t_periods :],
+        x[3 * t_periods : 4 * t_periods],
+        x[4 * t_periods :],
     )
 
     return [
         Dispatch(
             period=p,
             charge_kwh=float(charge[t]),
+            charge_solar_kwh=float(solar[t]),
             discharge_home_kwh=float(home[t]),
             discharge_export_kwh=float(export[t]),
             soc_kwh=float(max(soc[t], 0.0)),

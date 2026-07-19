@@ -21,6 +21,7 @@ def make_periods(
     export_p: list[float] | None = None,
     carbon: list[float] | None = None,
     demand: list[float] | None = None,
+    generation: list[float] | None = None,
     start: dt.datetime = BASE,
 ) -> list[Period]:
     return [
@@ -30,6 +31,7 @@ def make_periods(
             export_p_kwh=export_p[i] if export_p else imp,
             intensity_gco2=carbon[i] if carbon else None,
             demand_kwh=demand[i] if demand else 0.0,
+            generation_kwh=generation[i] if generation else 0.0,
         )
         for i, imp in enumerate(import_p)
     ]
@@ -141,3 +143,113 @@ def test_full_year_is_fast_enough():
     started = time.monotonic()
     simulate(periods, battery, Strategy.ARBITRAGE, Optimizer.LP)
     assert time.monotonic() - started < 5
+
+
+# ------------------------------------------------------------------- solar flows
+
+
+def test_solar_defaults_change_nothing():
+    """With generation defaulted to 0, net demand and surplus reduce to the plain
+    quantities and the LP result matches the pre-solar golden day exactly."""
+    periods = make_periods([10, 50, 10, 50])
+    assert all(p.net_demand_kwh == p.demand_kwh for p in periods)
+    assert all(p.surplus_kwh == 0 for p in periods)
+    result = simulate(periods, IDEAL, Strategy.ARBITRAGE, Optimizer.LP)
+    assert result.saving_gbp == pytest.approx(0.80)
+    assert all(d.charge_solar_kwh == 0 for d in result.dispatch)
+
+
+def test_lp_stores_surplus_for_the_evening():
+    """Hand-computable: 2 kWh surplus at noon (export 5p), 1 kWh demand at an
+    expensive evening (40p import). Baseline nets 40 − 10 = 30p; storing 1 kWh of
+    surplus (forgoing 5p export) to serve the evening saves 40 − 5 = 35p."""
+    periods = make_periods(
+        [20, 20, 20, 40],
+        export_p=[5, 5, 5, 10],
+        demand=[0, 0, 0, 1],
+        generation=[0, 2, 0, 0],
+    )
+    result = simulate(periods, IDEAL, Strategy.SELF_CONSUMPTION, Optimizer.LP)
+    assert result.baseline_cost_gbp == pytest.approx(0.30)
+    assert result.saving_gbp == pytest.approx(0.35)
+    assert result.dispatch[1].charge_solar_kwh == pytest.approx(1)
+    assert result.dispatch[1].export_solar_kwh == pytest.approx(1)
+    assert result.dispatch[3].discharge_home_kwh == pytest.approx(1)
+    # the surplus was cheaper storage than the 20p grid import
+    assert all(d.charge_kwh == 0 for d in result.dispatch)
+
+
+def test_lp_exports_surplus_when_storing_cannot_pay():
+    """Export now beats store-and-serve-later once the round-trip loss eats the
+    margin: 20p export now vs 0.9 × 21p avoided later."""
+    battery = Battery(capacity_kwh=1, power_kw=2, round_trip_efficiency=0.9)
+    periods = make_periods(
+        [25, 21], export_p=[20, 10], demand=[0, 1], generation=[2, 0]
+    )
+    result = simulate(periods, battery, Strategy.SELF_CONSUMPTION, Optimizer.LP)
+    assert all(d.charge_solar_kwh == 0 for d in result.dispatch)
+    assert result.dispatch[0].export_solar_kwh == pytest.approx(2)
+
+
+def test_green_stores_surplus_only_when_carbon_pays():
+    """Storing surplus forgoes carbon displacement now for displacement later; with a
+    90% round trip that only pays when later intensity > now / 0.9."""
+    battery = Battery(capacity_kwh=1, power_kw=2, round_trip_efficiency=0.9)
+    worth_it = make_periods(
+        [10, 10],
+        export_p=[5, 5],
+        carbon=[100.0, 300.0],
+        demand=[0, 1],
+        generation=[2, 0],
+    )
+    result = simulate(worth_it, battery, Strategy.GREEN, Optimizer.LP)
+    assert result.dispatch[0].charge_solar_kwh == pytest.approx(1)
+
+    not_worth_it = make_periods(
+        [10, 10],
+        export_p=[5, 5],
+        carbon=[300.0, 100.0],
+        demand=[0, 1],
+        generation=[2, 0],
+    )
+    result = simulate(not_worth_it, battery, Strategy.GREEN, Optimizer.LP)
+    assert all(d.charge_solar_kwh == 0 for d in result.dispatch)
+
+
+def test_discharge_capped_by_net_demand():
+    """Solar covers part of the demand behind the meter; the battery can only offset
+    what remains (worthless export keeps the LP honest)."""
+    periods = make_periods(
+        [10, 50], export_p=[0, 0], demand=[0, 1], generation=[0, 0.6]
+    )
+    result = simulate(periods, IDEAL, Strategy.SELF_CONSUMPTION, Optimizer.LP)
+    assert result.dispatch[1].discharge_home_kwh <= 0.4 + 1e-9
+
+
+def test_inverter_budget_shared_with_solar_charge():
+    """Grid charge + solar charge together cannot exceed the per-period flow limit."""
+    battery = Battery(capacity_kwh=10, power_kw=2, round_trip_efficiency=1)  # e = 1
+    periods = make_periods([1, 50], export_p=[0, 45], demand=[0, 0], generation=[2, 0])
+    result = simulate(periods, battery, Strategy.ARBITRAGE, Optimizer.LP)
+    first = result.dispatch[0]
+    assert first.charge_kwh + first.charge_solar_kwh <= 1 + 1e-9
+
+
+def test_lp_never_loses_to_greedy_with_solar():
+    rng = random.Random(11)
+    n = 48 * 3
+    prices = [max(-10, rng.gauss(22, 12)) for _ in range(n)]
+    exports = [max(0, p - 8) for p in prices]
+    demand = [0.3 if 34 <= i % 48 <= 41 else 0.1 for i in range(n)]
+    generation = [
+        max(0.0, rng.gauss(0.8, 0.3)) if 16 <= i % 48 <= 32 else 0.0 for i in range(n)
+    ]
+    periods = make_periods(
+        prices, export_p=exports, demand=demand, generation=generation
+    )
+    battery = Battery(capacity_kwh=5, power_kw=2.5, round_trip_efficiency=0.9)
+    for strategy in (Strategy.ARBITRAGE, Strategy.SELF_CONSUMPTION):
+        lp = simulate(periods, battery, strategy, Optimizer.LP)
+        greedy = simulate(periods, battery, strategy, Optimizer.GREEDY)
+        assert lp.saving_gbp >= greedy.saving_gbp - 1e-9, strategy
+        assert lp.saving_gbp >= -1e-9  # idling is always feasible
