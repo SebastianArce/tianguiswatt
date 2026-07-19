@@ -15,3 +15,4 @@ sources:
       - name: system_frequency
       - name: bmu_registry
       - name: tariff_rate
+      - name: solar_generation

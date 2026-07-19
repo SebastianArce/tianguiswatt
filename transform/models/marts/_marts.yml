@@ -58,9 +58,10 @@ models:
 
   - name: mart_tariff_periods
     description: >
-      Agile import/export rates (p/kWh) + carbon intensity per half-hour — the
-      battery simulator's decision row. Import can go negative (plunge pricing);
-      carbon is null where its history predates ingestion.
+      Agile import/export rates (p/kWh), carbon intensity, and national solar
+      capacity factor per half-hour — the battery simulator's decision row. Import
+      can go negative (plunge pricing); carbon and solar are null where their
+      history predates ingestion (solar 0.0 = night, a real value).
     columns:
       - name: from_ts
         tests: [not_null, unique]
