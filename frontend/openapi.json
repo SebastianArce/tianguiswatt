@@ -516,25 +516,6 @@
         "title": "DispatchBucket",
         "type": "object"
       },
-      "FeeComponent": {
-        "description": "One slice of what a capped unit rate pays for (approximate shares).",
-        "properties": {
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "share_pct": {
-            "title": "Share Pct",
-            "type": "number"
-          }
-        },
-        "required": [
-          "name",
-          "share_pct"
-        ],
-        "title": "FeeComponent",
-        "type": "object"
-      },
       "GenerationMixItem": {
         "properties": {
           "fuel_type": {
@@ -688,57 +669,6 @@
         "title": "MetricProfile",
         "type": "object"
       },
-      "MonthlyPriceRow": {
-        "description": "One month of the wholesale-vs-retail wedge (native units; the UI converts).",
-        "properties": {
-          "agile_import_p_kwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Agile Import P Kwh"
-          },
-          "apx_gbp_mwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Apx Gbp Mwh"
-          },
-          "month": {
-            "format": "date",
-            "title": "Month",
-            "type": "string"
-          },
-          "system_gbp_mwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "System Gbp Mwh"
-          }
-        },
-        "required": [
-          "month",
-          "system_gbp_mwh",
-          "apx_gbp_mwh",
-          "agile_import_p_kwh"
-        ],
-        "title": "MonthlyPriceRow",
-        "type": "object"
-      },
       "MonthlySaving": {
         "properties": {
           "carbon_saved_kg": {
@@ -761,73 +691,6 @@
           "carbon_saved_kg"
         ],
         "title": "MonthlySaving",
-        "type": "object"
-      },
-      "PeakFlex": {
-        "description": "What the balancing market recently paid for peak flexibility.",
-        "properties": {
-          "accepted_actions_7d": {
-            "title": "Accepted Actions 7D",
-            "type": "integer"
-          },
-          "avg_system_gbp_mwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Avg System Gbp Mwh"
-          },
-          "max_accepted_offer_gbp_mwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Max Accepted Offer Gbp Mwh"
-          },
-          "median_accepted_offer_gbp_mwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Median Accepted Offer Gbp Mwh"
-          },
-          "p90_accepted_offer_gbp_mwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "P90 Accepted Offer Gbp Mwh"
-          },
-          "window_days": {
-            "title": "Window Days",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "window_days",
-          "max_accepted_offer_gbp_mwh",
-          "p90_accepted_offer_gbp_mwh",
-          "median_accepted_offer_gbp_mwh",
-          "avg_system_gbp_mwh",
-          "accepted_actions_7d"
-        ],
-        "title": "PeakFlex",
         "type": "object"
       },
       "Price": {
@@ -1071,83 +934,6 @@
           "frequency_hz"
         ],
         "title": "Snapshot",
-        "type": "object"
-      },
-      "Story": {
-        "description": "Aggregates behind the narrative front page. Partial (constants only) rather\nthan erroring while the warehouse is still warming up \u2014 the page must render.",
-        "properties": {
-          "avg_agile_import_p_kwh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Avg Agile Import P Kwh"
-          },
-          "fee_stack": {
-            "items": {
-              "$ref": "#/components/schemas/FeeComponent"
-            },
-            "title": "Fee Stack",
-            "type": "array"
-          },
-          "monthly": {
-            "items": {
-              "$ref": "#/components/schemas/MonthlyPriceRow"
-            },
-            "title": "Monthly",
-            "type": "array"
-          },
-          "peak_flex": {
-            "$ref": "#/components/schemas/PeakFlex"
-          },
-          "price_cap_label": {
-            "title": "Price Cap Label",
-            "type": "string"
-          },
-          "price_cap_p_kwh": {
-            "title": "Price Cap P Kwh",
-            "type": "number"
-          },
-          "window_from": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Window From"
-          },
-          "window_to": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Window To"
-          }
-        },
-        "required": [
-          "window_from",
-          "window_to",
-          "monthly",
-          "avg_agile_import_p_kwh",
-          "price_cap_p_kwh",
-          "price_cap_label",
-          "fee_stack",
-          "peak_flex"
-        ],
-        "title": "Story",
         "type": "object"
       },
       "StrategyRun": {
@@ -1842,24 +1628,6 @@
           }
         },
         "summary": "Snapshot"
-      }
-    },
-    "/api/story": {
-      "get": {
-        "operationId": "story_api_story_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Story"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Story"
       }
     },
     "/api/supply-demand": {

@@ -16,7 +16,6 @@ from app.api import (
     history,
     profile,
     snapshot,
-    story,
     timeseries,
 )
 from app.core.config import settings
@@ -66,5 +65,4 @@ app.include_router(timeseries.router, prefix="/api")
 app.include_router(accepted_actions.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")
 app.include_router(battery.router, prefix="/api")
-app.include_router(story.router, prefix="/api")
 app.include_router(events.router, prefix="/api")

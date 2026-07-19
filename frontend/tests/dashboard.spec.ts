@@ -146,9 +146,9 @@ async function mockApi(page: import('@playwright/test').Page) {
   )
 }
 
-test('live grid renders data from the API', async ({ page }) => {
+test('home renders live data from the API', async ({ page }) => {
   await mockApi(page)
-  await page.goto('/live')
+  await page.goto('/')
 
   await expect(page.getByText('TianguisWatt')).toBeVisible()
   await expect(page.getByRole('heading', { name: /the state of the grid/i })).toBeVisible()
@@ -182,7 +182,7 @@ test('live grid renders data from the API', async ({ page }) => {
 
 test('header links to the GitHub repo', async ({ page }) => {
   await mockApi(page)
-  await page.goto('/live')
+  await page.goto('/')
   const link = page.getByRole('link', { name: 'View source on GitHub' })
   await expect(link).toHaveAttribute('href', 'https://github.com/SebastianArce/tianguiswatt')
   await expect(link).toHaveAttribute('target', '_blank')
@@ -190,7 +190,7 @@ test('header links to the GitHub repo', async ({ page }) => {
 
 test('nav switches between pages', async ({ page }) => {
   await mockApi(page)
-  await page.goto('/live')
+  await page.goto('/')
 
   await page.getByRole('link', { name: 'Explore', exact: true }).click()
   await expect(page).toHaveURL(/\/explore$/)
@@ -238,7 +238,7 @@ test('mobile menu opens and navigates', async ({ page }) => {
 test('no horizontal overflow on mobile', async ({ page }) => {
   await mockApi(page)
   await page.setViewportSize({ width: 320, height: 800 })
-  for (const path of ['/', '/live', '/explore', '/bid-stack', '/trends', '/battery', '/learn']) {
+  for (const path of ['/', '/explore', '/bid-stack', '/trends', '/battery', '/learn']) {
     await page.goto(path)
     await page.waitForTimeout(250)
     const overflows = await page.evaluate(
@@ -254,7 +254,7 @@ test('shows a connection banner when the live data fails', async ({ page }) => {
   await page.route('**/api/snapshot', (route) =>
     route.fulfill({ status: 500, json: { detail: 'boom' } }),
   )
-  await page.goto('/live')
+  await page.goto('/')
   await expect(page.getByText(/can't reach the live data/i)).toBeVisible({
     timeout: 10_000,
   })
