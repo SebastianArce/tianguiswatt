@@ -7,6 +7,7 @@ import { useChartTheme } from '@/lib/theme'
 
 const PRICE = '#d7a13f'
 const CARBON = '#5f74a8'
+const SUN = '#e2c044'
 const WINTER = '#5f74a8'
 const SUMMER = '#d7a13f'
 const LP = '#14716b'
@@ -198,6 +199,46 @@ export function BatteryHowItWorks({
     }
   }, [ctx, chart])
 
+  // The sun the simulator sees: median national capacity factor by half-hour.
+  const solarOption = useMemo<EChartsOption>(() => {
+    const rows = ctx?.intraday ?? []
+    return {
+      tooltip: {
+        trigger: 'axis',
+        valueFormatter: (v) => `${(Number(v) * 100).toFixed(1)}% of capacity`,
+      },
+      grid: { left: 48, right: 16, top: 16, bottom: 28 },
+      xAxis: {
+        type: 'category',
+        data: cat,
+        axisLabel: { color: chart.muted, interval: 7 },
+        axisLine: { lineStyle: { color: chart.line } },
+      },
+      yAxis: {
+        type: 'value',
+        name: 'capacity factor',
+        nameTextStyle: { color: chart.muted },
+        axisLabel: {
+          color: chart.muted,
+          formatter: (v: number) => `${Math.round(v * 100)}%`,
+        },
+        splitLine: { lineStyle: { color: chart.line } },
+      },
+      series: [
+        {
+          name: 'Solar capacity factor (median)',
+          type: 'line',
+          data: rows.map((b) => b.solar_cf_p50),
+          lineStyle: { color: SUN, width: 2 },
+          itemStyle: { color: SUN },
+          areaStyle: { color: SUN, opacity: 0.15 },
+          symbol: 'none',
+          smooth: true,
+        },
+      ],
+    }
+  }, [ctx, cat, chart])
+
   // Price vs carbon medians — two aligned panels, one shared clock.
   const divergenceOption = useMemo<EChartsOption>(() => {
     const rows = ctx?.intraday ?? []
@@ -296,6 +337,7 @@ export function BatteryHowItWorks({
 
   const priceRef = useECharts(priceOption)
   const demandRef = useECharts(demandOption)
+  const solarRef = useECharts(solarOption)
   const divergenceRef = useECharts(divergenceOption)
   const optimiserRef = useECharts(optimiserOption)
 
@@ -312,7 +354,7 @@ export function BatteryHowItWorks({
   return (
     <div className="max-w-5xl">
       {/* the headline facts everything below explains */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat
           value={avgImport}
           label="average Agile import rate over the window — what the household pays per kWh"
@@ -328,6 +370,12 @@ export function BatteryHowItWorks({
         <Stat
           value={ctx ? `${ctx.tdcv_kwh.toLocaleString()} kWh` : '—'}
           label="the simulated household's annual consumption — Ofgem's typical medium household"
+        />
+        <Stat
+          value={
+            ctx?.avg_solar_cf != null ? `${(ctx.avg_solar_cf * 100).toFixed(1)}%` : '—'
+          }
+          label="average GB solar capacity factor — the fleet's output as a share of its installed capacity"
         />
       </div>
       {ctx && (
@@ -381,6 +429,28 @@ export function BatteryHowItWorks({
           average, far more at the peak), while an exported kWh earns only ~{avgExport}.
           Same battery, same electricity —
           different counterparty.
+        </p>
+      </ChartSection>
+
+      <ChartSection
+        title="The sun the simulator sees"
+        caption="Median GB solar capacity factor by half-hour: national fleet output ÷ installed capacity, from Sheffield Solar's PV_Live. The simulated array generates this fraction of its kWp each half-hour."
+        chartRef={solarRef}
+        height="h-[240px]"
+      >
+        <p>
+          The solar option doesn't model your roof — it scales the <em>whole GB
+          fleet's</em> actual output (PV_Live's estimate, divided by installed
+          capacity) to a domestic array. Real weather over the real backtest window,
+          which matters: sunny half-hours are also cheap half-hours, and a typical
+          year's shape without that correlation would flatter the battery.
+        </p>
+        <p>
+          Two honest caveats. The national fleet includes optimally-tilted solar
+          farms, so this slightly flatters a typical roof. And with solar switched on
+          the baseline changes: it becomes the same house <em>with the panels but no
+          battery</em> — savings measure only what the battery adds, and storing
+          surplus costs its forgone export revenue.
         </p>
       </ChartSection>
 

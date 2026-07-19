@@ -1,4 +1,4 @@
-import type { EChartsOption } from 'echarts'
+import type { EChartsOption, SeriesOption } from 'echarts'
 import { useMemo, useState } from 'react'
 import { BatteryHowItWorks } from '@/components/BatteryHowItWorks'
 import { useBatterySimulation } from '@/hooks/api'
@@ -7,6 +7,7 @@ import { useChartTheme } from '@/lib/theme'
 
 type PresetKey = '5kwh' | '10kwh' | '13.5kwh'
 type HouseholdKey = 'low' | 'medium' | 'high' | 'electrified'
+type SolarKey = 'none' | '3.5kwp' | '5kwp'
 type StrategyKey = 'arbitrage' | 'self_consumption' | 'green'
 type Tab = 'compare' | 'how'
 
@@ -52,6 +53,15 @@ const HOUSEHOLDS: { label: string; value: HouseholdKey }[] = [
   { label: 'EV / heat pump', value: 'electrified' },
 ]
 
+const SOLAR_OPTIONS: { label: string; value: SolarKey }[] = [
+  { label: 'None', value: 'none' },
+  { label: '3.5 kWp', value: '3.5kwp' },
+  { label: '5 kWp', value: '5kwp' },
+]
+
+// Sunlight hue for generation series — deliberately distinct from the #d7a13f price gold.
+const SUN = '#e2c044'
+
 const gbp = (v: number) =>
   `${v < 0 ? '−' : ''}£${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
 
@@ -92,8 +102,9 @@ export function BatteryLabPage() {
   const [tab, setTab] = useState<Tab>('compare')
   const [preset, setPreset] = useState<PresetKey>('10kwh')
   const [household, setHousehold] = useState<HouseholdKey>('medium')
+  const [solar, setSolar] = useState<SolarKey>('none')
   const [strategy, setStrategy] = useState<StrategyKey>('self_consumption')
-  const { data, isLoading } = useBatterySimulation(preset, household)
+  const { data, isLoading } = useBatterySimulation(preset, household, solar)
   const chart = useChartTheme()
 
   const lpRuns = useMemo(() => {
@@ -118,12 +129,20 @@ export function BatteryLabPage() {
     const day = run?.typical_day ?? []
     const cat = day.map((b) => spLabel(b.settlement_period))
     const color = STRATEGIES[strategy].color
+    const hasSolar = (data?.solar_kwp ?? 0) > 0
     return {
       legend: {
         top: 0,
         textStyle: { color: chart.slate, fontSize: 11 },
         itemWidth: 14,
-        data: ['Import price', 'Export price', 'Charge', 'Discharge', 'Stored'],
+        data: [
+          'Import price',
+          'Export price',
+          'Charge',
+          ...(hasSolar ? ['Solar → battery', 'Solar'] : []),
+          'Discharge',
+          'Stored',
+        ],
       },
       tooltip: { trigger: 'axis' },
       axisPointer: { link: [{ xAxisIndex: 'all' }] },
@@ -200,6 +219,30 @@ export function BatteryLabPage() {
           itemStyle: { color: chart.muted, borderRadius: [3, 3, 0, 0] },
           barCategoryGap: '20%',
         },
+        ...(hasSolar
+          ? ([
+              {
+                name: 'Solar → battery',
+                type: 'bar',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                stack: 'flow',
+                data: day.map((b) => +b.charge_solar_kwh.toFixed(2)),
+                itemStyle: { color: SUN, borderRadius: [3, 3, 0, 0] },
+              },
+              {
+                name: 'Solar',
+                type: 'line',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                data: day.map((b) => b.solar_kwh),
+                lineStyle: { color: SUN, width: 1.5 },
+                itemStyle: { color: SUN },
+                symbol: 'none',
+                smooth: true,
+              },
+            ] as SeriesOption[])
+          : []),
         {
           name: 'Discharge',
           type: 'bar',
@@ -222,7 +265,7 @@ export function BatteryLabPage() {
         },
       ],
     }
-  }, [lpRuns, strategy, chart])
+  }, [lpRuns, strategy, chart, data?.solar_kwp])
 
   const savingsRef = useECharts(savingsOption)
   const carbonRef = useECharts(carbonOption)
@@ -285,11 +328,18 @@ export function BatteryLabPage() {
               </span>
               <Segmented options={HOUSEHOLDS} value={household} onChange={setHousehold} />
             </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <span className="font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
+                Solar
+              </span>
+              <Segmented options={SOLAR_OPTIONS} value={solar} onChange={setSolar} />
+            </div>
             {data && (
               <span className="text-xs text-muted">
                 {data.battery.power_kw} kW · 90% round-trip ·{' '}
                 {gbp(data.battery.cost_gbp)} installed ·{' '}
                 {data.household_kwh.toLocaleString()} kWh/yr home
+                {data.solar_kwp > 0 && <> · {data.solar_kwp} kWp solar</>}
               </span>
             )}
           </div>
@@ -337,13 +387,31 @@ export function BatteryLabPage() {
 
           {data && (
             <p className="mt-3 text-xs leading-relaxed text-muted">
-              For scale: this household — {data.household_kwh.toLocaleString()} kWh/yr,
-              following the typical daily shape scaled to that level — pays about{' '}
-              {gbp(data.baseline_cost_gbp_year)}/yr importing on Agile with no battery.
-              Savings assume the smart (LP) optimiser; a simple charge-window timer earns
-              less — the how-it-works tab shows by how much. Bigger households save more
-              because the battery can offset more peak-time import; a real EV or heat-pump
-              home also has a different <em>shape</em>, which this scaling doesn't capture.
+              {data.solar_kwp > 0 ? (
+                <>
+                  For scale: this household — {data.household_kwh.toLocaleString()}{' '}
+                  kWh/yr with a {data.solar_kwp} kWp array generating ~
+                  {data.solar_generation_kwh_year.toLocaleString()} kWh/yr —{' '}
+                  {data.baseline_cost_gbp_year >= 0
+                    ? `pays about ${gbp(data.baseline_cost_gbp_year)}/yr net`
+                    : `earns about ${gbp(-data.baseline_cost_gbp_year)}/yr net`}{' '}
+                  (imports minus export credits) on Agile <em>with the solar but no
+                  battery</em>. Savings shown are what the battery adds on top of the
+                  panels: it stores surplus that would otherwise export at ~10p and uses
+                  it against ~25p+ imports.
+                </>
+              ) : (
+                <>
+                  For scale: this household — {data.household_kwh.toLocaleString()}{' '}
+                  kWh/yr, following the typical daily shape scaled to that level — pays
+                  about {gbp(data.baseline_cost_gbp_year)}/yr importing on Agile with no
+                  battery. Savings assume the smart (LP) optimiser; a simple
+                  charge-window timer earns less — the how-it-works tab shows by how
+                  much. Bigger households save more because the battery can offset more
+                  peak-time import; a real EV or heat-pump home also has a different{' '}
+                  <em>shape</em>, which this scaling doesn't capture.
+                </>
+              )}
             </p>
           )}
 
@@ -389,6 +457,13 @@ export function BatteryLabPage() {
               trough; discharging (coloured, down) lines up with the evening peak. The
               green strategy follows carbon instead, so its windows drift away from the
               price curve — that drift is what it costs.
+              {data && data.solar_kwp > 0 && (
+                <>
+                  {' '}
+                  With solar on, the yellow line is the array's generation and yellow
+                  bars are surplus diverted into the battery instead of exporting.
+                </>
+              )}
             </p>
           </section>
         </>

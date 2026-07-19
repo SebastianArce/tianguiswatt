@@ -11,6 +11,8 @@ const BATTERY = {
 
 const typicalDay = Array.from({ length: 48 }, (_, i) => ({
   settlement_period: i + 1,
+  solar_kwh: 0,
+  charge_solar_kwh: 0,
   charge_kwh: i < 8 ? 2.0 : 0,
   discharge_kwh: i >= 35 && i < 40 ? 1.8 : 0,
   soc_kwh: i < 8 ? i : i < 35 ? 8 : Math.max(0, 8 - (i - 34) * 1.8),
@@ -34,6 +36,8 @@ const run = (strategy: string, optimizer: string, saving: number, carbon: number
 const SIMULATION = {
   battery: BATTERY,
   household_kwh: 2500,
+  solar_kwp: 0,
+  solar_generation_kwh_year: 0,
   window_from: '2025-07-18',
   window_to: '2026-07-18',
   days: 365,
@@ -49,12 +53,28 @@ const SIMULATION = {
   ],
 }
 
+const SOLAR_SIMULATION = {
+  ...SIMULATION,
+  solar_kwp: 5,
+  solar_generation_kwh_year: 4304,
+  baseline_cost_gbp_year: 7,
+  runs: SIMULATION.runs.map((r) => ({
+    ...r,
+    typical_day: r.typical_day.map((b, i) => ({
+      ...b,
+      solar_kwh: i >= 16 && i < 32 ? 1.2 : 0,
+      charge_solar_kwh: i >= 20 && i < 28 ? 0.8 : 0,
+    })),
+  })),
+}
+
 const CONTEXT = {
   window_from: '2025-07-18',
   window_to: '2026-07-18',
   days: 365,
   periods: 17520,
   tdcv_kwh: 2500,
+  avg_solar_cf: 0.098,
   import_tariff: 'E-1R-AGILE-24-10-01-C',
   export_tariff: 'E-1R-AGILE-OUTGOING-19-05-13-C',
   region: 'London (C)',
@@ -71,6 +91,7 @@ const CONTEXT = {
     import_p90: 28,
     export_p50: 9,
     carbon_p50: i < 12 ? 90 : 170,
+    solar_cf_p50: i >= 16 && i < 32 ? 0.3 : 0,
   })),
   demand_profile: Array.from({ length: 48 }, (_, i) => ({
     settlement_period: i + 1,
@@ -82,7 +103,11 @@ const CONTEXT = {
 
 async function mockBatteryApi(page: import('@playwright/test').Page) {
   await page.route('**/api/battery/simulation*', (route) =>
-    route.fulfill({ json: SIMULATION }),
+    route.fulfill({
+      json: route.request().url().includes('solar=none')
+        ? SIMULATION
+        : SOLAR_SIMULATION,
+    }),
   )
   await page.route('**/api/battery/context*', (route) =>
     route.fulfill({ json: CONTEXT }),
@@ -125,6 +150,13 @@ test('battery lab compares strategies', async ({ page }) => {
   await page.getByRole('button', { name: 'EV / heat pump' }).click()
   await householdRequest
 
+  // switching solar refetches and flips the copy to the battery-increment baseline
+  const solarRequest = page.waitForRequest(/solar=5kwp/)
+  await page.getByRole('button', { name: '5 kWp', exact: true }).click()
+  await solarRequest
+  await expect(page.getByText(/with the solar but no battery/)).toBeVisible()
+  await expect(page.getByText(/5 kWp solar/)).toBeVisible()
+
   // the how-it-works tab renders the explainer
   await page.getByRole('tab', { name: 'How it works' }).click()
   await expect(page.getByText('18.26p', { exact: true })).toBeVisible()
@@ -144,12 +176,18 @@ test('how-it-works tab explains the methodology', async ({ page }) => {
   // the sample size is stated explicitly
   await expect(page.getByText(/17,520 half-hours over 365 days/)).toBeVisible()
 
-  // the four explainer sections
+  // solar stats
+  await expect(page.getByText('9.8%')).toBeVisible()
+
+  // the explainer sections
   await expect(
     page.getByRole('heading', { name: /the price a household can actually trade/i }),
   ).toBeVisible()
   await expect(
     page.getByRole('heading', { name: /the household being simulated/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /the sun the simulator sees/i }),
   ).toBeVisible()
   await expect(
     page.getByRole('heading', { name: /cheapest is not greenest/i }),
