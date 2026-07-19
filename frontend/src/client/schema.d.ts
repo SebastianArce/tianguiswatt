@@ -310,6 +310,8 @@ export interface components {
             battery: components["schemas"]["BatterySpec"];
             /** Days */
             days: number;
+            /** Household Kwh */
+            household_kwh: number;
             /** Periods */
             periods: number;
             /** Runs */
@@ -726,6 +728,7 @@ export interface operations {
         parameters: {
             query?: {
                 battery?: "5kwh" | "10kwh" | "13.5kwh";
+                household?: "low" | "medium" | "high" | "electrified";
                 /** @description Months of history to simulate. */
                 months?: number;
             };

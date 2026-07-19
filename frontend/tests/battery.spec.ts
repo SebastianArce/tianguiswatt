@@ -33,6 +33,7 @@ const run = (strategy: string, optimizer: string, saving: number, carbon: number
 
 const SIMULATION = {
   battery: BATTERY,
+  household_kwh: 2500,
   window_from: '2025-07-18',
   window_to: '2026-07-18',
   days: 365,
@@ -118,6 +119,11 @@ test('battery lab compares strategies', async ({ page }) => {
   const request = page.waitForRequest(/battery=5kwh/)
   await page.getByRole('button', { name: '5 kWh', exact: true }).click()
   await request
+
+  // switching household refetches with the new consumption band
+  const householdRequest = page.waitForRequest(/household=electrified/)
+  await page.getByRole('button', { name: 'EV / heat pump' }).click()
+  await householdRequest
 
   // the how-it-works tab renders the explainer
   await page.getByRole('tab', { name: 'How it works' }).click()

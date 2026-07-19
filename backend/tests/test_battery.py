@@ -76,6 +76,26 @@ def test_context_reports_profiles_and_constants(ch_client):
     assert body["green_overlap_pct"] > 50
 
 
+def test_bigger_household_saves_more(ch_client):
+    medium = _get(ch_client, "/api/battery/simulation?battery=10kwh").json()
+    big = _get(
+        ch_client, "/api/battery/simulation?battery=10kwh&household=electrified"
+    ).json()
+    assert medium["household_kwh"] == 2500
+    assert big["household_kwh"] == 6500
+
+    # more demand in expensive hours → more avoidable import → more savings
+    def pick(body):
+        return next(
+            r
+            for r in body["runs"]
+            if r["strategy"] == "self_consumption" and r["optimizer"] == "lp"
+        )
+
+    assert pick(big)["saving_gbp"] > pick(medium)["saving_gbp"]
+    assert big["baseline_cost_gbp_year"] > medium["baseline_cost_gbp_year"]
+
+
 def test_warming_up_returns_503(empty_ch):
     response = _get(empty_ch, "/api/battery/simulation")
     assert response.status_code == 503

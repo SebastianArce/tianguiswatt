@@ -183,6 +183,10 @@
             "title": "Days",
             "type": "integer"
           },
+          "household_kwh": {
+            "title": "Household Kwh",
+            "type": "integer"
+          },
           "periods": {
             "title": "Periods",
             "type": "integer"
@@ -207,6 +211,7 @@
         },
         "required": [
           "battery",
+          "household_kwh",
           "window_from",
           "window_to",
           "days",
@@ -1228,6 +1233,22 @@
                 "13.5kwh"
               ],
               "title": "Battery",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "household",
+            "required": false,
+            "schema": {
+              "default": "medium",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "electrified"
+              ],
+              "title": "Household",
               "type": "string"
             }
           },
