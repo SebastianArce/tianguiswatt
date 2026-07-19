@@ -6,6 +6,7 @@ import { useECharts } from '@/hooks/useECharts'
 import { useChartTheme } from '@/lib/theme'
 
 type PresetKey = '5kwh' | '10kwh' | '13.5kwh'
+type HouseholdKey = 'low' | 'medium' | 'high' | 'electrified'
 type StrategyKey = 'arbitrage' | 'self_consumption' | 'green'
 type Tab = 'compare' | 'how'
 
@@ -40,6 +41,15 @@ const PRESETS: { label: string; value: PresetKey }[] = [
   { label: '5 kWh', value: '5kwh' },
   { label: '10 kWh', value: '10kwh' },
   { label: '13.5 kWh', value: '13.5kwh' },
+]
+
+// Ofgem's July-2026 TDCV bands (low/medium/high) + an illustrative electrified home;
+// the server scales the same typical daily shape to the chosen annual level.
+const HOUSEHOLDS: { label: string; value: HouseholdKey }[] = [
+  { label: 'Low', value: 'low' },
+  { label: 'Typical', value: 'medium' },
+  { label: 'High', value: 'high' },
+  { label: 'EV / heat pump', value: 'electrified' },
 ]
 
 const gbp = (v: number) =>
@@ -81,8 +91,9 @@ function Segmented<T extends string>({
 export function BatteryLabPage() {
   const [tab, setTab] = useState<Tab>('compare')
   const [preset, setPreset] = useState<PresetKey>('10kwh')
+  const [household, setHousehold] = useState<HouseholdKey>('medium')
   const [strategy, setStrategy] = useState<StrategyKey>('self_consumption')
-  const { data, isLoading } = useBatterySimulation(preset)
+  const { data, isLoading } = useBatterySimulation(preset, household)
   const chart = useChartTheme()
 
   const lpRuns = useMemo(() => {
@@ -261,15 +272,24 @@ export function BatteryLabPage() {
         <BatteryHowItWorks preset={preset} />
       ) : (
         <>
-          <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3">
-            <span className="font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
-              Battery
-            </span>
-            <Segmented options={PRESETS} value={preset} onChange={setPreset} />
+          <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <span className="font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
+                Battery
+              </span>
+              <Segmented options={PRESETS} value={preset} onChange={setPreset} />
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <span className="font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
+                Household
+              </span>
+              <Segmented options={HOUSEHOLDS} value={household} onChange={setHousehold} />
+            </div>
             {data && (
               <span className="text-xs text-muted">
                 {data.battery.power_kw} kW · 90% round-trip ·{' '}
-                {gbp(data.battery.cost_gbp)} installed
+                {gbp(data.battery.cost_gbp)} installed ·{' '}
+                {data.household_kwh.toLocaleString()} kWh/yr home
               </span>
             )}
           </div>
@@ -317,10 +337,13 @@ export function BatteryLabPage() {
 
           {data && (
             <p className="mt-3 text-xs leading-relaxed text-muted">
-              For scale: the same household — Ofgem's typical 2,500 kWh/yr — pays about{' '}
+              For scale: this household — {data.household_kwh.toLocaleString()} kWh/yr,
+              following the typical daily shape scaled to that level — pays about{' '}
               {gbp(data.baseline_cost_gbp_year)}/yr importing on Agile with no battery.
               Savings assume the smart (LP) optimiser; a simple charge-window timer earns
-              less — the how-it-works tab shows by how much.
+              less — the how-it-works tab shows by how much. Bigger households save more
+              because the battery can offset more peak-time import; a real EV or heat-pump
+              home also has a different <em>shape</em>, which this scaling doesn't capture.
             </p>
           )}
 

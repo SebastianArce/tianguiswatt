@@ -188,6 +188,7 @@ class BatterySimulation(BaseModel):
     """All strategy runs for one battery preset, plus shared context."""
 
     battery: BatterySpec
+    household_kwh: int  # annual consumption the demand profile is scaled to
     window_from: dt.date
     window_to: dt.date
     days: int

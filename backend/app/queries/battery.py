@@ -40,6 +40,16 @@ _LONDON = ZoneInfo("Europe/London")
 # match the `tdcv_kwh` dbt var that scales mart_domestic_profile.
 TDCV_KWH = 2500
 
+# Annual consumption bands: Ofgem's July-2026 TDCVs (low/medium/high, single-rate),
+# plus an illustrative electrified home (EV and/or heat pump — no official band exists).
+# The demand profile keeps the PC1 *shape* and scales linearly to the chosen level.
+HOUSEHOLDS: dict[str, int] = {
+    "low": 1600,
+    "medium": TDCV_KWH,
+    "high": 3800,
+    "electrified": 6500,
+}
+
 IMPORT_TARIFF = "E-1R-AGILE-24-10-01-C"
 EXPORT_TARIFF = "E-1R-AGILE-OUTGOING-19-05-13-C"
 REGION = "London (C)"
@@ -178,17 +188,30 @@ def _monthly(dispatch: list[Dispatch]) -> list[MonthlySaving]:
 
 
 def fetch_simulation(
-    client: Client, preset_key: str, months: int
+    client: Client, preset_key: str, months: int, household_key: str = "medium"
 ) -> BatterySimulation | None:
     """Run every (strategy × optimizer) combination for a preset; None = no data yet."""
     spec = PRESETS[preset_key]
-    key = ("simulation", preset_key, months, _data_stamp(client))
+    household_kwh = HOUSEHOLDS[household_key]
+    key = ("simulation", preset_key, months, household_key, _data_stamp(client))
     if (cached := _cache.get(key)) is not None:
         return cached  # type: ignore[return-value]
 
     periods = _fetch_periods(client, months)
     if not periods:
         return None
+    if household_kwh != TDCV_KWH:
+        scale = household_kwh / TDCV_KWH
+        periods = [
+            Period(
+                from_ts=p.from_ts,
+                import_p_kwh=p.import_p_kwh,
+                export_p_kwh=p.export_p_kwh,
+                intensity_gco2=p.intensity_gco2,
+                demand_kwh=p.demand_kwh * scale,
+            )
+            for p in periods
+        ]
     battery = Battery(
         capacity_kwh=spec.capacity_kwh,
         power_kw=spec.power_kw,
@@ -223,6 +246,7 @@ def fetch_simulation(
             )
     simulation = BatterySimulation(
         battery=spec,
+        household_kwh=household_kwh,
         window_from=periods[0].from_ts.date(),
         window_to=periods[-1].from_ts.date(),
         days=days,
