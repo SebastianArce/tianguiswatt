@@ -276,7 +276,8 @@ def _seed(ch: Client) -> None:
     ch.command(
         "CREATE TABLE mart_tariff_periods "
         "(from_ts DateTime, import_p_kwh Float64, export_p_kwh Float64, "
-        "intensity_gco2 Nullable(Int32)) ENGINE = MergeTree ORDER BY from_ts"
+        "intensity_gco2 Nullable(Int32), solar_cf Nullable(Float64)) "
+        "ENGINE = MergeTree ORDER BY from_ts"
     )
     # Two full days (2026-06-29/30, both weekdays): cheap+green overnight (00–06 UTC),
     # dear+dirty evening (16–19 UTC) — enough spread for every strategy to cycle.
@@ -295,11 +296,19 @@ def _seed(ch: Client) -> None:
                 import_p, carbon = 35.0, 250
             else:
                 import_p, carbon = 22.0, 150
-            tariff_rows.append([ts, import_p, max(import_p - 8, 0.0), carbon])
+            # a daytime bell for solar; 0.0 at night is real data, never NULL
+            solar_cf = 0.5 if 10 <= ts.hour < 14 else 0.2 if 7 <= ts.hour < 17 else 0.0
+            tariff_rows.append([ts, import_p, max(import_p - 8, 0.0), carbon, solar_cf])
     ch.insert(
         "mart_tariff_periods",
         tariff_rows,
-        column_names=["from_ts", "import_p_kwh", "export_p_kwh", "intensity_gco2"],
+        column_names=[
+            "from_ts",
+            "import_p_kwh",
+            "export_p_kwh",
+            "intensity_gco2",
+            "solar_cf",
+        ],
     )
     ch.command(
         "CREATE TABLE mart_domestic_profile "

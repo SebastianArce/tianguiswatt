@@ -13,6 +13,7 @@ router = APIRouter()
 
 PresetKey = Literal["5kwh", "10kwh", "13.5kwh"]
 HouseholdKey = Literal["low", "medium", "high", "electrified"]
+SolarKey = Literal["none", "3.5kwp", "5kwp"]
 Months = Annotated[
     int, Query(ge=1, le=24, description="Months of history to simulate.")
 ]
@@ -24,9 +25,10 @@ def battery_simulation(
     client: CH,
     battery: PresetKey = "10kwh",
     household: HouseholdKey = "medium",
+    solar: SolarKey = "none",
     months: Months = 12,
 ) -> BatterySimulation:
-    simulation = fetch_simulation(client, battery, months, household)
+    simulation = fetch_simulation(client, battery, months, household, solar)
     if simulation is None:
         raise HTTPException(status_code=503, detail="Tariff data not available yet.")
     return simulation

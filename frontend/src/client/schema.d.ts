@@ -269,6 +269,8 @@ export interface components {
             avg_export_p_kwh: number;
             /** Avg Import P Kwh */
             avg_import_p_kwh: number;
+            /** Avg Solar Cf */
+            avg_solar_cf: number | null;
             /** Days */
             days: number;
             /** Demand Profile */
@@ -316,6 +318,10 @@ export interface components {
             periods: number;
             /** Runs */
             runs: components["schemas"]["StrategyRun"][];
+            /** Solar Generation Kwh Year */
+            solar_generation_kwh_year: number;
+            /** Solar Kwp */
+            solar_kwp: number;
             /**
              * Window From
              * Format: date
@@ -415,6 +421,8 @@ export interface components {
         DispatchBucket: {
             /** Charge Kwh */
             charge_kwh: number;
+            /** Charge Solar Kwh */
+            charge_solar_kwh: number;
             /** Discharge Kwh */
             discharge_kwh: number;
             /** Export P Kwh */
@@ -427,6 +435,8 @@ export interface components {
             settlement_period: number;
             /** Soc Kwh */
             soc_kwh: number;
+            /** Solar Kwh */
+            solar_kwh: number;
         };
         /** GenerationMixItem */
         GenerationMixItem: {
@@ -534,6 +544,8 @@ export interface components {
             import_p90: number;
             /** Settlement Period */
             settlement_period: number;
+            /** Solar Cf P50 */
+            solar_cf_p50: number | null;
         };
         /** PricePoint */
         PricePoint: {
@@ -729,6 +741,7 @@ export interface operations {
             query?: {
                 battery?: "5kwh" | "10kwh" | "13.5kwh";
                 household?: "low" | "medium" | "high" | "electrified";
+                solar?: "none" | "3.5kwp" | "5kwp";
                 /** @description Months of history to simulate. */
                 months?: number;
             };

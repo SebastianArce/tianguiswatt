@@ -156,7 +156,9 @@ class DispatchBucket(BaseModel):
     """The battery's average behaviour in one settlement period across the window."""
 
     settlement_period: int
-    charge_kwh: float
+    charge_kwh: float  # grid → battery
+    charge_solar_kwh: float  # solar surplus → battery
+    solar_kwh: float  # array generation in this period
     discharge_kwh: float
     soc_kwh: float
     import_p_kwh: float
@@ -189,11 +191,15 @@ class BatterySimulation(BaseModel):
 
     battery: BatterySpec
     household_kwh: int  # annual consumption the demand profile is scaled to
+    solar_kwp: float  # array size; 0 = no solar
+    solar_generation_kwh_year: float  # annualised array output over the window
     window_from: dt.date
     window_to: dt.date
     days: int
     periods: int  # exact number of half-hours simulated
-    baseline_cost_gbp_year: float  # the household's import bill with no battery
+    # the household's net bill (imports minus export credits) with its chosen solar
+    # but NO battery — the increment the battery must justify
+    baseline_cost_gbp_year: float
     runs: list[StrategyRun]
 
 
@@ -208,6 +214,7 @@ class PriceCarbonBucket(BaseModel):
     import_p90: float
     export_p50: float
     carbon_p50: float | None
+    solar_cf_p50: float | None  # national solar capacity factor, median
 
 
 class DemandBucket(BaseModel):
@@ -232,6 +239,7 @@ class BatteryContext(BaseModel):
     region: str
     avg_import_p_kwh: float
     avg_export_p_kwh: float
+    avg_solar_cf: float | None  # mean national solar capacity factor across the window
     green_overlap_pct: (
         float | None
     )  # how often the greenest 8 half-hours are also the cheapest 8

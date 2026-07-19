@@ -83,6 +83,17 @@
             "title": "Avg Import P Kwh",
             "type": "number"
           },
+          "avg_solar_cf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Solar Cf"
+          },
           "days": {
             "title": "Days",
             "type": "integer"
@@ -161,6 +172,7 @@
           "region",
           "avg_import_p_kwh",
           "avg_export_p_kwh",
+          "avg_solar_cf",
           "green_overlap_pct",
           "presets",
           "intraday",
@@ -198,6 +210,14 @@
             "title": "Runs",
             "type": "array"
           },
+          "solar_generation_kwh_year": {
+            "title": "Solar Generation Kwh Year",
+            "type": "number"
+          },
+          "solar_kwp": {
+            "title": "Solar Kwp",
+            "type": "number"
+          },
           "window_from": {
             "format": "date",
             "title": "Window From",
@@ -212,6 +232,8 @@
         "required": [
           "battery",
           "household_kwh",
+          "solar_kwp",
+          "solar_generation_kwh_year",
           "window_from",
           "window_to",
           "days",
@@ -440,6 +462,10 @@
             "title": "Charge Kwh",
             "type": "number"
           },
+          "charge_solar_kwh": {
+            "title": "Charge Solar Kwh",
+            "type": "number"
+          },
           "discharge_kwh": {
             "title": "Discharge Kwh",
             "type": "number"
@@ -470,11 +496,17 @@
           "soc_kwh": {
             "title": "Soc Kwh",
             "type": "number"
+          },
+          "solar_kwh": {
+            "title": "Solar Kwh",
+            "type": "number"
           }
         },
         "required": [
           "settlement_period",
           "charge_kwh",
+          "charge_solar_kwh",
+          "solar_kwh",
           "discharge_kwh",
           "soc_kwh",
           "import_p_kwh",
@@ -749,6 +781,17 @@
           "settlement_period": {
             "title": "Settlement Period",
             "type": "integer"
+          },
+          "solar_cf_p50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solar Cf P50"
           }
         },
         "required": [
@@ -759,7 +802,8 @@
           "import_p75",
           "import_p90",
           "export_p50",
-          "carbon_p50"
+          "carbon_p50",
+          "solar_cf_p50"
         ],
         "title": "PriceCarbonBucket",
         "type": "object"
@@ -1249,6 +1293,21 @@
                 "electrified"
               ],
               "title": "Household",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "solar",
+            "required": false,
+            "schema": {
+              "default": "none",
+              "enum": [
+                "none",
+                "3.5kwp",
+                "5kwp"
+              ],
+              "title": "Solar",
               "type": "string"
             }
           },
