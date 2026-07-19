@@ -104,7 +104,8 @@ export function BatteryLabPage() {
   const [household, setHousehold] = useState<HouseholdKey>('medium')
   const [solar, setSolar] = useState<SolarKey>('none')
   const [strategy, setStrategy] = useState<StrategyKey>('self_consumption')
-  const { data, isLoading } = useBatterySimulation(preset, household, solar)
+  const { data, isLoading, isError, isPlaceholderData, refetch } =
+    useBatterySimulation(preset, household, solar)
   const chart = useChartTheme()
 
   const lpRuns = useMemo(() => {
@@ -342,14 +343,33 @@ export function BatteryLabPage() {
                 {data.solar_kwp > 0 && <> · {data.solar_kwp} kWp solar</>}
               </span>
             )}
+            {isPlaceholderData && (
+              <span className="animate-pulse text-xs text-muted">recomputing…</span>
+            )}
           </div>
 
           {isLoading && (
             <p className="mb-6 text-sm text-muted">Backtesting a year of half-hours…</p>
           )}
+          {isError && (
+            <p className="mb-6 text-sm text-slate">
+              Couldn't load the simulation — the server may be starting up.{' '}
+              <button
+                type="button"
+                onClick={() => void refetch()}
+                className="text-teal underline underline-offset-2"
+              >
+                Retry
+              </button>
+            </p>
+          )}
 
-          {/* one card per strategy, LP-optimised */}
-          <div className="grid gap-4 md:grid-cols-3">
+          {/* one card per strategy, LP-optimised; dimmed while a param switch recomputes */}
+          <div
+            className={`grid gap-4 transition-opacity md:grid-cols-3 ${
+              isPlaceholderData ? 'opacity-60' : ''
+            }`}
+          >
             {STRATEGY_KEYS.map((key) => {
               const meta = STRATEGIES[key]
               const run = lpRuns.get(key)
@@ -363,23 +383,27 @@ export function BatteryLabPage() {
                   <p className="mt-1 min-h-[72px] text-xs leading-relaxed text-slate">
                     {meta.blurb}
                   </p>
-                  <div className="mt-3 font-display text-3xl text-ink">
-                    {run ? gbp(run.saving_gbp_year) : '—'}
-                    <span className="ml-1 text-sm text-muted">/yr</span>
-                  </div>
-                  <div className="mt-1 font-mono text-xs text-slate">
-                    {run ? (
-                      <>
+                  {run ? (
+                    <>
+                      <div className="mt-3 font-display text-3xl text-ink">
+                        {gbp(run.saving_gbp_year)}
+                        <span className="ml-1 text-sm text-muted">/yr</span>
+                      </div>
+                      <div className="mt-1 font-mono text-xs text-slate">
                         {run.payback_years != null
                           ? `payback ${run.payback_years} yrs`
                           : 'never pays back'}
                         {' · '}
                         {run.carbon_saved_kg_year.toLocaleString()} kg CO₂/yr
-                      </>
-                    ) : (
-                      '…'
-                    )}
-                  </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* first-load skeleton — sized to match the loaded layout */}
+                      <div className="mt-4 h-8 w-28 animate-pulse rounded bg-mist" />
+                      <div className="mt-2 h-4 w-40 animate-pulse rounded bg-mist" />
+                    </>
+                  )}
                 </section>
               )
             })}
@@ -415,7 +439,11 @@ export function BatteryLabPage() {
             </p>
           )}
 
-          <div className="mt-6 grid gap-4 xl:grid-cols-2">
+          <div
+            className={`mt-6 grid gap-4 transition-opacity xl:grid-cols-2 ${
+              isPlaceholderData ? 'opacity-60' : ''
+            }`}
+          >
             <section className="rounded-[10px] border border-line bg-paper p-5 shadow-sm">
               <h2 className="font-display text-lg text-ink">Money saved per year</h2>
               <p className="mt-0.5 text-xs text-slate">
