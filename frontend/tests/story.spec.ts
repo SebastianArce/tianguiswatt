@@ -20,8 +20,53 @@ const SNAPSHOT = {
   frequency_hz: 49.97,
 }
 
+const PROFILE = {
+  metric: 'price',
+  days: 90,
+  intraday: Array.from({ length: 24 }, (_, h) => ({
+    hour: h,
+    p10: 40 + h,
+    p25: 55 + h,
+    p50: 70 + h * 2,
+    p75: 95 + h,
+    p90: 120 + h,
+  })),
+  weekly: [],
+}
+
+const STORY = {
+  window_from: '2025-07-01',
+  window_to: '2026-07-19',
+  monthly: Array.from({ length: 12 }, (_, i) => ({
+    month: `${i < 6 ? 2025 : 2026}-${String((i % 12) + (i < 6 ? 7 : -5)).padStart(2, '0')}-01`,
+    system_gbp_mwh: 70 + i,
+    apx_gbp_mwh: 72 + i,
+    agile_import_p_kwh: 17 + i * 0.2,
+  })),
+  avg_agile_import_p_kwh: 18.26,
+  price_cap_p_kwh: 26.11,
+  price_cap_label: 'Ofgem price cap · Jul–Sep 2026',
+  fee_stack: [
+    { name: 'Wholesale energy', share_pct: 45 },
+    { name: 'Networks', share_pct: 20 },
+    { name: 'Policy costs', share_pct: 11 },
+    { name: 'Operating costs & margin', share_pct: 19 },
+    { name: 'VAT', share_pct: 5 },
+  ],
+  peak_flex: {
+    window_days: 30,
+    max_accepted_offer_gbp_mwh: 999,
+    p90_accepted_offer_gbp_mwh: 999,
+    median_accepted_offer_gbp_mwh: 150.56,
+    avg_system_gbp_mwh: 50.71,
+    accepted_actions_7d: 233,
+  },
+}
+
 async function mockStoryApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
+  await page.route('**/api/profile*', (route) => route.fulfill({ json: PROFILE }))
+  await page.route('**/api/story', (route) => route.fulfill({ json: STORY }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
   )
@@ -55,6 +100,24 @@ test('the engine room links into the instruments', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: /the state of the grid/i }),
   ).toBeVisible()
+})
+
+test('the middle sections reveal and chart on scroll', async ({ page }) => {
+  await mockStoryApi(page)
+  await page.goto('/')
+
+  await page.getByRole('heading', { name: /different price every thirty minutes/i }).scrollIntoViewIfNeeded()
+  await expect(
+    page.getByRole('heading', { name: /wholesale price, by hour of day/i }),
+  ).toBeVisible()
+  await expect(page.locator('#half-hours canvas').first()).toBeVisible()
+
+  await page.getByRole('heading', { name: /flattens the whole thing/i }).scrollIntoViewIfNeeded()
+  await expect(page.locator('#wedge canvas').first()).toBeVisible()
+  // the fee strip states its shares
+  await expect(page.getByText('Wholesale energy')).toBeVisible()
+  await expect(page.getByText('45%')).toBeVisible()
+  await expect(page.getByText(/26\.11p\/kWh/)).toBeVisible()
 })
 
 test('the nav leads with the story', async ({ page }) => {
