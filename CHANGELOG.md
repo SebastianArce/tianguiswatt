@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.10.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.9.0...v0.10.0) (2026-07-19)
+
+
+### Features
+
+* /api/story aggregates for the narrative landing page ([#165](https://github.com/SebastianArce/tianguiswatt/issues/165)) ([035dfa5](https://github.com/SebastianArce/tianguiswatt/commit/035dfa5ae14e79dd9014d624e6e9a8b8c873c0bd))
+* backfill wholesale price history ([#168](https://github.com/SebastianArce/tianguiswatt/issues/168)) ([268d815](https://github.com/SebastianArce/tianguiswatt/commit/268d815128d3ed11c0fcb1b51eca50c2c7b33f06))
+* narrative front page shell with the control room at /live ([#170](https://github.com/SebastianArce/tianguiswatt/issues/170)) ([f0e4512](https://github.com/SebastianArce/tianguiswatt/commit/f0e45127ad4e0f8ae694ca98c089bc55ec251209))
+* story sections for one home armed and the fleet multiplier ([#172](https://github.com/SebastianArce/tianguiswatt/issues/172)) ([555ab66](https://github.com/SebastianArce/tianguiswatt/commit/555ab6643d999d8ea21bb7f90dfecfbbfbe23684))
+* story sections for the half-hour grid and the retail wedge ([#171](https://github.com/SebastianArce/tianguiswatt/issues/171)) ([5f295d9](https://github.com/SebastianArce/tianguiswatt/commit/5f295d9c0036314eaed0be7738cecf6a05be5af3))
+* why-the-grid-pays section with page meta and README ([#173](https://github.com/SebastianArce/tianguiswatt/issues/173)) ([bde2589](https://github.com/SebastianArce/tianguiswatt/commit/bde2589293fe37ea0535dca5bee212880fc83acb))
+
+
+### Bug Fixes
+
+* mart_metrics grain collision on the 50-period clock-change day ([#167](https://github.com/SebastianArce/tianguiswatt/issues/167)) ([a02b01f](https://github.com/SebastianArce/tianguiswatt/commit/a02b01f963aa578ba5d28f5371ae79687d51c77f))
+
 ## [0.9.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.8.0...v0.9.0) (2026-07-19)
 
 
