@@ -108,6 +108,19 @@ class TariffRateRecord(BaseModel):
     value_inc_vat: float
 
 
+class SolarGenerationRecord(BaseModel):
+    """One PV_Live national solar half-hour: estimated GB fleet generation (MW) and
+    installed capacity (MWp). `datetime_gmt` labels the END of the interval (UTC).
+    Generation can be null for the not-yet-estimated leading edge."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    period_end_ts: dt.datetime = Field(alias="datetime_gmt")
+    gsp_id: int
+    generation_mw: float | None = None
+    capacity_mwp: float | None = Field(default=None, alias="installedcapacity_mwp")
+
+
 class BidOfferRecord(BaseModel):
     """One Balancing Mechanism bid-offer pair (Elexon BOD): a BM unit's submitted bid and
     offer prices (£/MWh) over a level (MW) range for a settlement period. `pairId` numbers

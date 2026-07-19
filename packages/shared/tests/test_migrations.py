@@ -142,6 +142,15 @@ def test_migrate_creates_tariff_rate_table(client):
     assert exists == 1
 
 
+def test_migrate_creates_solar_generation_table(client):
+    migrate(client)
+    exists = client.query(
+        "SELECT count() FROM system.tables "
+        "WHERE database='raw' AND name='solar_generation'"
+    ).result_rows[0][0]
+    assert exists == 1
+
+
 def test_migrate_creates_bid_offer_tables(client):
     migrate(client)
     for tbl in ("bid_offer", "bid_offer_acceptance"):

@@ -18,10 +18,12 @@ from shared.models import (
     FrequencyRecord,
     FuelInstRecord,
     MarketIndexPriceRecord,
+    SolarGenerationRecord,
     SystemPriceRecord,
     TariffRateRecord,
 )
 from orchestrator.carbon import fetch_carbon_intensity, parse_carbon_intensity
+from orchestrator.pvlive import fetch_solar_generation, parse_solar_generation
 from orchestrator.octopus import (
     EXPORT_PRODUCT,
     IMPORT_PRODUCT,
@@ -98,6 +100,15 @@ MID_COLUMNS = [
     "data_provider",
     "price",
     "volume",
+    "ingest_version",
+]
+
+SOLAR_TABLE = "raw.solar_generation"
+SOLAR_COLUMNS = [
+    "period_end_ts",
+    "gsp_id",
+    "generation_mw",
+    "capacity_mwp",
     "ingest_version",
 ]
 
@@ -260,6 +271,24 @@ def load_market_index_price(
         for r in records
     ]
     client.insert(MID_TABLE, rows, column_names=MID_COLUMNS)
+    return len(rows)
+
+
+def load_solar_generation(
+    client: Client, records: list[SolarGenerationRecord], ingest_version: int
+) -> int:
+    """Insert PV_Live solar records tagged with an ingest version."""
+    rows = [
+        [
+            r.period_end_ts,
+            r.gsp_id,
+            r.generation_mw,
+            r.capacity_mwp,
+            ingest_version,
+        ]
+        for r in records
+    ]
+    client.insert(SOLAR_TABLE, rows, column_names=SOLAR_COLUMNS)
     return len(rows)
 
 
@@ -444,6 +473,28 @@ def market_index_price(context: AssetExecutionContext) -> MaterializeResult:
     finally:
         client.close()
     context.log.info(f"Ingested {rows} MID rows (ingest_version={ingest_version})")
+    return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
+
+
+@asset(description="GB national solar outturn per half-hour (Sheffield Solar PV_Live).")
+def solar_generation(context: AssetExecutionContext) -> MaterializeResult:
+    """Fetch the last two days of PV_Live estimates and load into ClickHouse raw."""
+    now = dt.datetime.now(tz=dt.UTC)
+    fmt = "%Y-%m-%dT%H:%M:%S"
+    # PV_Live revises provisional estimates for a few days; re-fetching a rolling
+    # window lets ReplacingMergeTree supersede them by ingest version.
+    records = parse_solar_generation(
+        fetch_solar_generation(
+            (now - dt.timedelta(days=2)).strftime(fmt), now.strftime(fmt)
+        )
+    )
+    ingest_version = _ingest_version()
+    client = get_client()
+    try:
+        rows = load_solar_generation(client, records, ingest_version)
+    finally:
+        client.close()
+    context.log.info(f"Ingested {rows} solar rows (ingest_version={ingest_version})")
     return MaterializeResult(metadata={"rows": rows, "ingest_version": ingest_version})
 
 
