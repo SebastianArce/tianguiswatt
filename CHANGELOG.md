@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.8.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.7.0...v0.8.0) (2026-07-19)
+
+
+### Features
+
+* behind-the-meter solar in the dispatch engine ([#152](https://github.com/SebastianArce/tianguiswatt/issues/152)) ([4eb3d53](https://github.com/SebastianArce/tianguiswatt/commit/4eb3d5303944a3b3e8f77b046b4b3f91c8c41079))
+* household consumption selector for the battery simulation ([#144](https://github.com/SebastianArce/tianguiswatt/issues/144)) ([ed05804](https://github.com/SebastianArce/tianguiswatt/commit/ed058048f009ab732c6f7c0f3ff409e39c2e72c4))
+* ingest PV_Live national solar outturn ([#150](https://github.com/SebastianArce/tianguiswatt/issues/150)) ([b2473d4](https://github.com/SebastianArce/tianguiswatt/commit/b2473d4ed43be2096b5553622edee69c21c86191))
+* solar capacity factor on the tariff decision row ([#151](https://github.com/SebastianArce/tianguiswatt/issues/151)) ([f473847](https://github.com/SebastianArce/tianguiswatt/commit/f4738475d4897e8e98a369dfae458709f3ede42e))
+
+
+### Bug Fixes
+
+* state the data sample behind Battery Lab charts ([#139](https://github.com/SebastianArce/tianguiswatt/issues/139)) ([4a4ea07](https://github.com/SebastianArce/tianguiswatt/commit/4a4ea07589dd036f50dc47009f23904ed22cab36))
+
+
+### Documentation
+
+* correct the prod backfill commands ([#140](https://github.com/SebastianArce/tianguiswatt/issues/140)) ([625f415](https://github.com/SebastianArce/tianguiswatt/commit/625f415848f257a8ec3ea45431685a86e1ee7789))
+
 ## [0.7.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.6.0...v0.7.0) (2026-07-18)
 
 
