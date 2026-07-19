@@ -109,12 +109,13 @@ export function useTimeseries(
 export function useBatterySimulation(
   battery: '5kwh' | '10kwh' | '13.5kwh',
   household: 'low' | 'medium' | 'high' | 'electrified' = 'medium',
+  solar: 'none' | '3.5kwp' | '5kwp' = 'none',
 ) {
   return useQuery({
-    queryKey: ['battery-simulation', battery, household],
+    queryKey: ['battery-simulation', battery, household, solar],
     queryFn: async () => {
       const { data, error } = await api.GET('/api/battery/simulation', {
-        params: { query: { battery, household } },
+        params: { query: { battery, household, solar } },
       })
       if (error) throw error
       return data
