@@ -146,9 +146,9 @@ async function mockApi(page: import('@playwright/test').Page) {
   )
 }
 
-test('home renders live data from the API', async ({ page }) => {
+test('live grid renders data from the API', async ({ page }) => {
   await mockApi(page)
-  await page.goto('/')
+  await page.goto('/live')
 
   await expect(page.getByText('TianguisWatt')).toBeVisible()
   await expect(page.getByRole('heading', { name: /the state of the grid/i })).toBeVisible()
@@ -182,7 +182,7 @@ test('home renders live data from the API', async ({ page }) => {
 
 test('header links to the GitHub repo', async ({ page }) => {
   await mockApi(page)
-  await page.goto('/')
+  await page.goto('/live')
   const link = page.getByRole('link', { name: 'View source on GitHub' })
   await expect(link).toHaveAttribute('href', 'https://github.com/SebastianArce/tianguiswatt')
   await expect(link).toHaveAttribute('target', '_blank')
@@ -190,9 +190,9 @@ test('header links to the GitHub repo', async ({ page }) => {
 
 test('nav switches between pages', async ({ page }) => {
   await mockApi(page)
-  await page.goto('/')
+  await page.goto('/live')
 
-  await page.getByRole('link', { name: 'Explore' }).click()
+  await page.getByRole('link', { name: 'Explore', exact: true }).click()
   await expect(page).toHaveURL(/\/explore$/)
   await expect(
     page.getByRole('heading', { name: /explore the data/i }),
@@ -205,7 +205,7 @@ test('nav switches between pages', async ({ page }) => {
     page.getByRole('heading', { name: /balancing offer stack/i }),
   ).toBeVisible()
 
-  await page.getByRole('link', { name: 'Trends' }).click()
+  await page.getByRole('link', { name: 'Trends', exact: true }).click()
   await expect(page).toHaveURL(/\/trends$/)
   await expect(
     page.getByRole('heading', { name: /market trends/i }),
@@ -228,7 +228,7 @@ test('mobile menu opens and navigates', async ({ page }) => {
 
   // desktop nav is hidden at this width; navigate via the hamburger drawer
   await page.getByRole('button', { name: 'Open menu' }).click()
-  await page.getByRole('link', { name: 'Trends' }).click()
+  await page.getByRole('link', { name: 'Trends', exact: true }).click()
   await expect(page).toHaveURL(/\/trends$/)
   await expect(
     page.getByRole('heading', { name: /market trends/i }),
@@ -238,7 +238,7 @@ test('mobile menu opens and navigates', async ({ page }) => {
 test('no horizontal overflow on mobile', async ({ page }) => {
   await mockApi(page)
   await page.setViewportSize({ width: 320, height: 800 })
-  for (const path of ['/', '/explore', '/bid-stack', '/trends', '/battery', '/learn']) {
+  for (const path of ['/', '/live', '/explore', '/bid-stack', '/trends', '/battery', '/learn']) {
     await page.goto(path)
     await page.waitForTimeout(250)
     const overflows = await page.evaluate(
@@ -254,7 +254,7 @@ test('shows a connection banner when the live data fails', async ({ page }) => {
   await page.route('**/api/snapshot', (route) =>
     route.fulfill({ status: 500, json: { detail: 'boom' } }),
   )
-  await page.goto('/')
+  await page.goto('/live')
   await expect(page.getByText(/can't reach the live data/i)).toBeVisible({
     timeout: 10_000,
   })
@@ -273,7 +273,7 @@ test('dark mode toggles, persists across reload, and charts survive', async ({ p
   expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('dark')
 
   // a charted page still renders its canvas after re-theming
-  await page.getByRole('link', { name: 'Explore' }).click()
+  await page.getByRole('link', { name: 'Explore', exact: true }).click()
   await expect(page.locator('canvas').first()).toBeVisible()
 
   // the choice persists across a reload (no flash back to light)

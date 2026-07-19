@@ -8,7 +8,7 @@ import { PricesCard } from '@/components/PricesCard'
 import { StatTicker } from '@/components/StatTicker'
 import { SupplyDemandCard } from '@/components/SupplyDemandCard'
 
-export function HomePage() {
+export function LivePage() {
   return (
     <div>
       <div className="mb-5 flex items-end justify-between gap-4">

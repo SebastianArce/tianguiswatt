@@ -6,11 +6,12 @@ import { useLiveUpdates } from '@/hooks/useLiveUpdates'
 import { useTheme } from '@/hooks/useTheme'
 
 const NAV = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/explore', label: 'Explore' },
+  { to: '/', label: 'Story', end: true },
+  { to: '/live', label: 'Live grid' },
+  { to: '/battery', label: 'Battery Lab' },
   { to: '/bid-stack', label: 'Bid stack' },
   { to: '/trends', label: 'Trends' },
-  { to: '/battery', label: 'Battery Lab' },
+  { to: '/explore', label: 'Explore' },
   { to: '/learn', label: 'Learn' },
 ]
 
@@ -117,7 +118,7 @@ export function RootLayout() {
 
           <div className="flex items-center gap-1">
             {/* desktop nav */}
-            <nav className="hidden gap-1 sm:flex">
+            <nav className="hidden gap-1 md:flex">
               {NAV.map((n) => (
                 <NavLink
                   key={n.to}
@@ -139,7 +140,7 @@ export function RootLayout() {
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
               aria-expanded={menuOpen}
-              className="-mr-2 rounded-md p-2 text-ink hover:bg-ink/5 sm:hidden"
+              className="-mr-2 rounded-md p-2 text-ink hover:bg-ink/5 md:hidden"
             >
             <svg
               width="22"
@@ -159,7 +160,7 @@ export function RootLayout() {
 
       {/* mobile slide-out drawer (kept mounted for the transition) */}
       <div
-        className={`fixed inset-0 z-50 overflow-hidden sm:hidden ${menuOpen ? '' : 'pointer-events-none'}`}
+        className={`fixed inset-0 z-50 overflow-hidden md:hidden ${menuOpen ? '' : 'pointer-events-none'}`}
         aria-hidden={!menuOpen}
       >
         <button
