@@ -121,7 +121,18 @@ const DEMAND_PROFILE = {
   })),
 }
 
+const BID_STACK = {
+  settlement_period: 42,
+  entries: [
+    { national_grid_bm_unit: 'AAA-1', offer_price: 60, volume_mw: 200, accepted: true },
+    { national_grid_bm_unit: 'BBB-1', offer_price: 150, volume_mw: 150, accepted: true },
+    { national_grid_bm_unit: 'CCC-1', offer_price: 999, volume_mw: 100, accepted: false },
+    { national_grid_bm_unit: 'DDD-1', offer_price: 99999, volume_mw: 50, accepted: false },
+  ],
+}
+
 async function mockStoryApi(page: import('@playwright/test').Page) {
+  await page.route('**/api/bid-stack', (route) => route.fulfill({ json: BID_STACK }))
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
   await page.route('**/api/profile*', (route) =>
     route.fulfill({
@@ -208,6 +219,20 @@ test('one home and the fleet respond to their controls', async ({ page }) => {
   await expect(page.getByText('500 MW')).toBeVisible()
   await expect(page.getByText(/1\.1× a 450 MW gas unit/)).toBeVisible()
   await expect(page.getByText(/identical homes/i)).toBeVisible()
+})
+
+test('the grid-pays section states what flexibility earns', async ({ page }) => {
+  await mockStoryApi(page)
+  await page.goto('/')
+  await expect(page).toHaveTitle(/power station hiding/i)
+
+  await page
+    .getByRole('heading', { name: /already pays for exactly this/i })
+    .scrollIntoViewIfNeeded()
+  await expect(page.getByText('£999')).toBeVisible() // max accepted, 30 days
+  await expect(page.getByText(/£151/)).toBeVisible() // median vs £51 wholesale
+  await expect(page.getByText('233')).toBeVisible() // actions in 7 days
+  await expect(page.locator('#grid-pays canvas')).toBeVisible()
 })
 
 test('the nav leads with the story', async ({ page }) => {
