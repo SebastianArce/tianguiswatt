@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import { ContainedLayout } from '@/components/ContainedLayout'
 import { RootLayout } from '@/components/RootLayout'
 import { BatteryLabPage } from '@/pages/BatteryLabPage'
 import { BidStackPage } from '@/pages/BidStackPage'
@@ -11,12 +12,14 @@ export default function App() {
   return (
     <Routes>
       <Route element={<RootLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="explore" element={<ExplorePage />} />
-        <Route path="bid-stack" element={<BidStackPage />} />
-        <Route path="trends" element={<TrendsPage />} />
-        <Route path="battery" element={<BatteryLabPage />} />
-        <Route path="learn" element={<LearnPage />} />
+        <Route element={<ContainedLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="explore" element={<ExplorePage />} />
+          <Route path="bid-stack" element={<BidStackPage />} />
+          <Route path="trends" element={<TrendsPage />} />
+          <Route path="battery" element={<BatteryLabPage />} />
+          <Route path="learn" element={<LearnPage />} />
+        </Route>
       </Route>
     </Routes>
   )
