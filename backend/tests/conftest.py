@@ -165,6 +165,8 @@ def _seed(ch: Client) -> None:
                 False,
                 True,
             ],  # a bid: excluded
+            # a defensive-priced pair on an accepted unit: must never read as marginal
+            [d, 42, "AAA-1", "T_AAA-1", 3, 500.0, 99999.0, 0, 0, True, True],
             [d, 42, "BBB-1", "T_BBB-1", 1, 90.0, 100.0, 0, 0, True, False],
             [d, 42, "BBB-1", "T_BBB-1", 2, 110.0, 120.0, 20, 20, True, False],
             [
