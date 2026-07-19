@@ -14,6 +14,7 @@ from orchestrator.assets import (
     demand,
     generation_fuelinst,
     market_index_price,
+    solar_generation,
     system_frequency,
     system_price,
     tariff_rates,
@@ -41,6 +42,7 @@ def _dbt_project_dir() -> Path:
         system_frequency,
         bmu_registry,
         tariff_rates,
+        solar_generation,
     ],
     description="dbt staging + marts, built from raw.* (runs `dbt build`).",
 )

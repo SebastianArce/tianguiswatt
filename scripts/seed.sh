@@ -9,5 +9,6 @@ uv run --all-packages python -c "from shared.migrations.runner import migrate; p
 uv run --all-packages dagster asset materialize --select '*' -m orchestrator.definitions
 uv run --all-packages python scripts/backfill_tariff_rates.py
 uv run --all-packages python scripts/backfill_carbon.py
+uv run --all-packages python scripts/backfill_solar.py
 uv run dbt build --project-dir transform --profiles-dir transform
 echo "Seed complete — open the dashboard at http://localhost:5173"
