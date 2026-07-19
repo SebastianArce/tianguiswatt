@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.8.0...v0.9.0) (2026-07-19)
+
+
+### Features
+
+* solar controls and charts in the Battery Lab UI ([#155](https://github.com/SebastianArce/tianguiswatt/issues/155)) ([364b6c9](https://github.com/SebastianArce/tianguiswatt/commit/364b6c9395d66f081b1d756548b46df7d87e6339))
+* solar system option on the battery API ([#153](https://github.com/SebastianArce/tianguiswatt/issues/153)) ([a5b039e](https://github.com/SebastianArce/tianguiswatt/commit/a5b039eb48744850dd61c28b865178a6d9bb683a))
+
+
+### Bug Fixes
+
+* loading states and query-cache tuning ([#157](https://github.com/SebastianArce/tianguiswatt/issues/157)) ([e64e251](https://github.com/SebastianArce/tianguiswatt/commit/e64e2514b6a494e07401c4b0a92239842263b576))
+
 ## [0.8.0](https://github.com/SebastianArce/tianguiswatt/compare/v0.7.0...v0.8.0) (2026-07-19)
 
 
