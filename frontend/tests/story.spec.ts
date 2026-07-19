@@ -63,9 +63,77 @@ const STORY = {
   },
 }
 
+const typicalDay = Array.from({ length: 48 }, (_, i) => ({
+  settlement_period: i + 1,
+  solar_kwh: 0,
+  charge_solar_kwh: 0,
+  charge_kwh: i >= 4 && i < 10 ? 1.5 : 0,
+  discharge_kwh: i >= 34 && i < 42 ? 1.0 : 0,
+  soc_kwh: i < 4 ? 0 : i < 34 ? 8 : Math.max(0, 8 - (i - 33)),
+  import_p_kwh: i < 12 ? 12 : i >= 34 && i < 40 ? 33 : 20,
+  export_p_kwh: 10,
+  intensity_gco2: 150,
+}))
+
+const simRun = (optimizer: string, saving: number) => ({
+  strategy: 'self_consumption',
+  optimizer,
+  saving_gbp: saving,
+  saving_gbp_year: saving,
+  carbon_saved_kg_year: 147,
+  cycles: 300,
+  payback_years: +(5500 / saving).toFixed(1),
+  typical_day: typicalDay,
+  monthly: [],
+})
+
+const SIMULATION = {
+  battery: { key: '10kwh', name: 'Medium (10 kWh)', capacity_kwh: 10, power_kw: 5, round_trip_efficiency: 0.9, cost_gbp: 5500 },
+  household_kwh: 2500,
+  solar_kwp: 0,
+  solar_generation_kwh_year: 0,
+  window_from: '2025-07-19',
+  window_to: '2026-07-19',
+  days: 366,
+  periods: 17521,
+  baseline_cost_gbp_year: 492,
+  runs: [
+    simRun('greedy', 64),
+    simRun('lp', 319),
+    { ...simRun('greedy', 148), strategy: 'arbitrage' },
+    { ...simRun('lp', 215), strategy: 'arbitrage' },
+    { ...simRun('greedy', 28), strategy: 'green' },
+    { ...simRun('lp', -69), strategy: 'green' },
+  ],
+}
+
+const DEMAND_PROFILE = {
+  metric: 'demand',
+  days: 30,
+  weekly: [],
+  intraday: Array.from({ length: 24 }, (_, h) => ({
+    hour: h,
+    p10: 24000,
+    p25: 26000,
+    p50: 28000 + (h >= 17 && h <= 20 ? 8000 : 0),
+    p75: 34000,
+    p90: 38000,
+  })),
+}
+
 async function mockStoryApi(page: import('@playwright/test').Page) {
   await page.route('**/api/snapshot', (route) => route.fulfill({ json: SNAPSHOT }))
-  await page.route('**/api/profile*', (route) => route.fulfill({ json: PROFILE }))
+  await page.route('**/api/profile*', (route) =>
+    route.fulfill({
+      json:
+        new URL(route.request().url()).searchParams.get('metric') === 'demand'
+          ? DEMAND_PROFILE
+          : PROFILE,
+    }),
+  )
+  await page.route('**/api/battery/simulation*', (route) =>
+    route.fulfill({ json: SIMULATION }),
+  )
   await page.route('**/api/story', (route) => route.fulfill({ json: STORY }))
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': ok\n\n' }),
@@ -118,6 +186,28 @@ test('the middle sections reveal and chart on scroll', async ({ page }) => {
   await expect(page.getByText('Wholesale energy')).toBeVisible()
   await expect(page.getByText('45%')).toBeVisible()
   await expect(page.getByText(/26\.11p\/kWh/)).toBeVisible()
+})
+
+test('one home and the fleet respond to their controls', async ({ page }) => {
+  await mockStoryApi(page)
+  await page.goto('/')
+
+  await page.getByRole('heading', { name: /the shape becomes income/i }).scrollIntoViewIfNeeded()
+  await expect(page.getByText('£319')).toBeVisible()
+  await expect(page.getByText(/worth £255\/yr/)).toBeVisible() // lp − greedy
+  await page.getByRole('button', { name: 'Simple timer' }).click()
+  await expect(page.getByText('£64')).toBeVisible()
+
+  await page.getByRole('heading', { name: /quarter of a million is a power station/i }).scrollIntoViewIfNeeded()
+  // default 10,000 homes: 1 kWh/hh evening discharge → 2 kW/home → 20 MW
+  await expect(page.getByText('10,000')).toBeVisible()
+  await expect(page.getByText('20 MW')).toBeVisible()
+  // slide to the top: 250,000 homes → 500 MW → ≈ 1.1× a gas unit
+  await page.getByRole('slider', { name: /number of homes/i }).fill('1')
+  await expect(page.getByText('250,000')).toBeVisible()
+  await expect(page.getByText('500 MW')).toBeVisible()
+  await expect(page.getByText(/1\.1× a 450 MW gas unit/)).toBeVisible()
+  await expect(page.getByText(/identical homes/i)).toBeVisible()
 })
 
 test('the nav leads with the story', async ({ page }) => {

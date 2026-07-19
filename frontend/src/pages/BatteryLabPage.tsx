@@ -1,102 +1,26 @@
 import type { EChartsOption, SeriesOption } from 'echarts'
 import { useMemo, useState } from 'react'
 import { BatteryHowItWorks } from '@/components/BatteryHowItWorks'
+import { Segmented } from '@/components/Segmented'
 import { useBatterySimulation } from '@/hooks/api'
 import { useECharts } from '@/hooks/useECharts'
+import {
+  HOUSEHOLDS,
+  PRESETS,
+  SOLAR_OPTIONS,
+  STRATEGIES,
+  STRATEGY_KEYS,
+  SUN,
+  gbp,
+  spLabel,
+  type HouseholdKey,
+  type PresetKey,
+  type SolarKey,
+  type StrategyKey,
+} from '@/lib/battery'
 import { useChartTheme } from '@/lib/theme'
 
-type PresetKey = '5kwh' | '10kwh' | '13.5kwh'
-type HouseholdKey = 'low' | 'medium' | 'high' | 'electrified'
-type SolarKey = 'none' | '3.5kwp' | '5kwp'
-type StrategyKey = 'arbitrage' | 'self_consumption' | 'green'
 type Tab = 'compare' | 'how'
-
-/** Fixed strategy identity — colours are assigned to the entity, shared across themes
- *  like the fuel palette, and always paired with a visible label. */
-const STRATEGIES: Record<
-  StrategyKey,
-  { label: string; color: string; blurb: string }
-> = {
-  arbitrage: {
-    label: 'Arbitrage',
-    color: '#d7a13f',
-    blurb:
-      'Buy cheap overnight, sell back at the evening peak. No household involved — the battery trades the import/export spread alone, so every kWh out earns only the export rate.',
-  },
-  self_consumption: {
-    label: 'Self-consumption',
-    color: '#14716b',
-    blurb:
-      'Charge cheap, then power the house through the evening peak instead of importing. Each shifted kWh is worth the full import rate — this is how home batteries actually pay back.',
-  },
-  green: {
-    label: 'Green',
-    color: '#5f9e78',
-    blurb:
-      'The same battery optimised for carbon instead of pence: charge when the grid is cleanest, displace it when it is dirtiest — and see what that choice costs.',
-  },
-}
-const STRATEGY_KEYS = Object.keys(STRATEGIES) as StrategyKey[]
-
-const PRESETS: { label: string; value: PresetKey }[] = [
-  { label: '5 kWh', value: '5kwh' },
-  { label: '10 kWh', value: '10kwh' },
-  { label: '13.5 kWh', value: '13.5kwh' },
-]
-
-// Ofgem's July-2026 TDCV bands (low/medium/high) + an illustrative electrified home;
-// the server scales the same typical daily shape to the chosen annual level.
-const HOUSEHOLDS: { label: string; value: HouseholdKey }[] = [
-  { label: 'Low', value: 'low' },
-  { label: 'Typical', value: 'medium' },
-  { label: 'High', value: 'high' },
-  { label: 'EV / heat pump', value: 'electrified' },
-]
-
-const SOLAR_OPTIONS: { label: string; value: SolarKey }[] = [
-  { label: 'None', value: 'none' },
-  { label: '3.5 kWp', value: '3.5kwp' },
-  { label: '5 kWp', value: '5kwp' },
-]
-
-// Sunlight hue for generation series — deliberately distinct from the #d7a13f price gold.
-const SUN = '#e2c044'
-
-const gbp = (v: number) =>
-  `${v < 0 ? '−' : ''}£${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-
-/** "SP 35" → "17:00" (settlement periods count from 00:00 local). */
-const spLabel = (sp: number) => {
-  const mins = (sp - 1) * 30
-  return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${mins % 60 ? '30' : '00'}`
-}
-
-function Segmented<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: { label: string; value: T }[]
-  value: T
-  onChange: (v: T) => void
-}) {
-  return (
-    <div className="inline-flex rounded-md border border-line bg-paper p-0.5">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          onClick={() => onChange(o.value)}
-          className={`rounded px-3 py-1 font-mono text-xs transition-colors ${
-            value === o.value ? 'bg-ink text-paper' : 'text-slate hover:text-ink'
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 export function BatteryLabPage() {
   const [tab, setTab] = useState<Tab>('compare')

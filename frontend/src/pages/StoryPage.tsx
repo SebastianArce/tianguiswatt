@@ -1,6 +1,8 @@
 import { EngineRoomSection } from '@/components/story/EngineRoomSection'
+import { FleetSection } from '@/components/story/FleetSection'
 import { HalfHoursSection } from '@/components/story/HalfHoursSection'
 import { HeroSection } from '@/components/story/HeroSection'
+import { OneHomeSection } from '@/components/story/OneHomeSection'
 import { WedgeSection } from '@/components/story/WedgeSection'
 
 /** The narrative front page: from the live half-hour to the value of orchestrated
@@ -12,8 +14,9 @@ export function StoryPage() {
       <HeroSection />
       <HalfHoursSection />
       <WedgeSection />
-      {/* sections: one home armed · the fleet multiplier · why the grid pays —
-          arriving next */}
+      <OneHomeSection />
+      <FleetSection />
+      {/* section: why the grid pays — arriving next */}
       <EngineRoomSection />
     </main>
   )
