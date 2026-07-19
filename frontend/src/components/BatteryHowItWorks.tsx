@@ -35,7 +35,11 @@ function Term({ title, children }: { title: string; children: ReactNode }) {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="rounded-[10px] border border-line bg-paper p-4">
-      <div className="font-display text-2xl text-ink">{value}</div>
+      {value === '—' ? (
+        <div className="h-8 w-20 animate-pulse rounded bg-mist" />
+      ) : (
+        <div className="font-display text-2xl text-ink">{value}</div>
+      )}
       <div className="mt-1 text-xs leading-relaxed text-slate">{label}</div>
     </div>
   )
