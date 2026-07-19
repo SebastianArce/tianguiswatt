@@ -346,8 +346,9 @@ export function BatteryLabPage() {
               <div>
                 <h2 className="font-display text-lg text-ink">A typical day's dispatch</h2>
                 <p className="mt-0.5 text-xs text-slate">
-                  Average behaviour by half-hour across the whole window — prices above,
-                  battery flows and stored energy below
+                  Average behaviour by half-hour across{' '}
+                  {data ? `all ${data.days} simulated days` : 'the whole window'} — prices
+                  above, battery flows and stored energy below
                 </p>
               </div>
               <Segmented

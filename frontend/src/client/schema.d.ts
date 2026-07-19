@@ -281,6 +281,8 @@ export interface components {
             import_tariff: string;
             /** Intraday */
             intraday: components["schemas"]["PriceCarbonBucket"][];
+            /** Periods */
+            periods: number;
             /** Presets */
             presets: components["schemas"]["BatterySpec"][];
             /** Region */
@@ -308,6 +310,8 @@ export interface components {
             battery: components["schemas"]["BatterySpec"];
             /** Days */
             days: number;
+            /** Periods */
+            periods: number;
             /** Runs */
             runs: components["schemas"]["StrategyRun"][];
             /**

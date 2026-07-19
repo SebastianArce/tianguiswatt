@@ -226,6 +226,7 @@ def fetch_simulation(
         window_from=periods[0].from_ts.date(),
         window_to=periods[-1].from_ts.date(),
         days=days,
+        periods=len(periods),
         baseline_cost_gbp_year=round(baseline_gbp_year, 2),
         runs=runs,
     )
@@ -303,6 +304,7 @@ def fetch_context(client: Client, months: int) -> BatteryContext | None:
         window_from=periods[0].from_ts.date(),
         window_to=periods[-1].from_ts.date(),
         days=(periods[-1].from_ts.date() - periods[0].from_ts.date()).days + 1,
+        periods=len(periods),
         tdcv_kwh=TDCV_KWH,
         import_tariff=IMPORT_TARIFF,
         export_tariff=EXPORT_TARIFF,

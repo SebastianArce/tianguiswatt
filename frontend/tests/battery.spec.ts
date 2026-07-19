@@ -36,6 +36,7 @@ const SIMULATION = {
   window_from: '2025-07-18',
   window_to: '2026-07-18',
   days: 365,
+  periods: 17520,
   baseline_cost_gbp_year: 492,
   runs: [
     run('arbitrage', 'greedy', 148, 119),
@@ -51,6 +52,7 @@ const CONTEXT = {
   window_from: '2025-07-18',
   window_to: '2026-07-18',
   days: 365,
+  periods: 17520,
   tdcv_kwh: 2500,
   import_tariff: 'E-1R-AGILE-24-10-01-C',
   export_tariff: 'E-1R-AGILE-OUTGOING-19-05-13-C',
@@ -133,6 +135,8 @@ test('how-it-works tab explains the methodology', async ({ page }) => {
   await expect(page.getByText('56%', { exact: true })).toBeVisible()
   await expect(page.getByText('2,500 kWh', { exact: true })).toBeVisible()
   await expect(page.getByText(/E-1R-AGILE-24-10-01-C/)).toBeVisible()
+  // the sample size is stated explicitly
+  await expect(page.getByText(/17,520 half-hours over 365 days/)).toBeVisible()
 
   // the four explainer sections
   await expect(

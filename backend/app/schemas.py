@@ -191,6 +191,7 @@ class BatterySimulation(BaseModel):
     window_from: dt.date
     window_to: dt.date
     days: int
+    periods: int  # exact number of half-hours simulated
     baseline_cost_gbp_year: float  # the household's import bill with no battery
     runs: list[StrategyRun]
 
@@ -223,6 +224,7 @@ class BatteryContext(BaseModel):
     window_from: dt.date
     window_to: dt.date
     days: int
+    periods: int  # exact number of half-hours behind the aggregates
     tdcv_kwh: int
     import_tariff: str
     export_tariff: str
