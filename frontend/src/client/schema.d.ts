@@ -197,23 +197,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/story": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Story */
-        get: operations["story_api_story_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/supply-demand": {
         parameters: {
             query?: never;
@@ -455,16 +438,6 @@ export interface components {
             /** Solar Kwh */
             solar_kwh: number;
         };
-        /**
-         * FeeComponent
-         * @description One slice of what a capped unit rate pays for (approximate shares).
-         */
-        FeeComponent: {
-            /** Name */
-            name: string;
-            /** Share Pct */
-            share_pct: number;
-        };
         /** GenerationMixItem */
         GenerationMixItem: {
             /** Fuel Type */
@@ -525,23 +498,6 @@ export interface components {
             /** Weekly */
             weekly: components["schemas"]["WeekdayHourCell"][];
         };
-        /**
-         * MonthlyPriceRow
-         * @description One month of the wholesale-vs-retail wedge (native units; the UI converts).
-         */
-        MonthlyPriceRow: {
-            /** Agile Import P Kwh */
-            agile_import_p_kwh: number | null;
-            /** Apx Gbp Mwh */
-            apx_gbp_mwh: number | null;
-            /**
-             * Month
-             * Format: date
-             */
-            month: string;
-            /** System Gbp Mwh */
-            system_gbp_mwh: number | null;
-        };
         /** MonthlySaving */
         MonthlySaving: {
             /** Carbon Saved Kg */
@@ -553,24 +509,6 @@ export interface components {
             month: string;
             /** Saving Gbp */
             saving_gbp: number;
-        };
-        /**
-         * PeakFlex
-         * @description What the balancing market recently paid for peak flexibility.
-         */
-        PeakFlex: {
-            /** Accepted Actions 7D */
-            accepted_actions_7d: number;
-            /** Avg System Gbp Mwh */
-            avg_system_gbp_mwh: number | null;
-            /** Max Accepted Offer Gbp Mwh */
-            max_accepted_offer_gbp_mwh: number | null;
-            /** Median Accepted Offer Gbp Mwh */
-            median_accepted_offer_gbp_mwh: number | null;
-            /** P90 Accepted Offer Gbp Mwh */
-            p90_accepted_offer_gbp_mwh: number | null;
-            /** Window Days */
-            window_days: number;
         };
         /** Price */
         Price: {
@@ -641,28 +579,6 @@ export interface components {
             measured_at: string | null;
             price: components["schemas"]["Price"] | null;
             supply_demand: components["schemas"]["SupplyDemand"] | null;
-        };
-        /**
-         * Story
-         * @description Aggregates behind the narrative front page. Partial (constants only) rather
-         *     than erroring while the warehouse is still warming up — the page must render.
-         */
-        Story: {
-            /** Avg Agile Import P Kwh */
-            avg_agile_import_p_kwh: number | null;
-            /** Fee Stack */
-            fee_stack: components["schemas"]["FeeComponent"][];
-            /** Monthly */
-            monthly: components["schemas"]["MonthlyPriceRow"][];
-            peak_flex: components["schemas"]["PeakFlex"];
-            /** Price Cap Label */
-            price_cap_label: string;
-            /** Price Cap P Kwh */
-            price_cap_p_kwh: number;
-            /** Window From */
-            window_from: string | null;
-            /** Window To */
-            window_to: string | null;
         };
         /**
          * StrategyRun
@@ -1062,26 +978,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Snapshot"];
-                };
-            };
-        };
-    };
-    story_api_story_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Story"];
                 };
             };
         };

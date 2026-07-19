@@ -6,26 +6,16 @@ import { useLiveUpdates } from '@/hooks/useLiveUpdates'
 import { useTheme } from '@/hooks/useTheme'
 
 const NAV = [
-  { to: '/', label: 'Story', end: true },
-  { to: '/live', label: 'Live grid' },
-  { to: '/battery', label: 'Battery Lab' },
+  { to: '/', label: 'Home', end: true },
+  { to: '/explore', label: 'Explore' },
   { to: '/bid-stack', label: 'Bid stack' },
   { to: '/trends', label: 'Trends' },
-  { to: '/explore', label: 'Explore' },
+  { to: '/battery', label: 'Battery Lab' },
   { to: '/learn', label: 'Learn' },
 ]
 
 const REPO_URL = 'https://github.com/SebastianArce/tianguiswatt'
 
-const TITLES: Record<string, string> = {
-  '/': 'TianguisWatt — the GB grid, and the power station hiding in people\'s homes',
-  '/live': 'Live grid · TianguisWatt',
-  '/battery': 'Battery Lab · TianguisWatt',
-  '/bid-stack': 'Bid stack · TianguisWatt',
-  '/trends': 'Trends · TianguisWatt',
-  '/explore': 'Explore · TianguisWatt',
-  '/learn': 'Learn · TianguisWatt',
-}
 
 /** Link to the open-source repo — the project is a portfolio piece. */
 function GitHubLink() {
@@ -103,10 +93,6 @@ export function RootLayout() {
   // close the drawer whenever the route changes
   useEffect(() => setMenuOpen(false), [location.pathname])
 
-  useEffect(() => {
-    document.title = TITLES[location.pathname] ?? 'TianguisWatt'
-  }, [location.pathname])
-
   // while the drawer is open: close on Escape + lock background scroll
   useEffect(() => {
     if (!menuOpen) return
@@ -132,7 +118,7 @@ export function RootLayout() {
 
           <div className="flex items-center gap-1">
             {/* desktop nav */}
-            <nav className="hidden gap-1 md:flex">
+            <nav className="hidden gap-1 sm:flex">
               {NAV.map((n) => (
                 <NavLink
                   key={n.to}
@@ -154,7 +140,7 @@ export function RootLayout() {
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
               aria-expanded={menuOpen}
-              className="-mr-2 rounded-md p-2 text-ink hover:bg-ink/5 md:hidden"
+              className="-mr-2 rounded-md p-2 text-ink hover:bg-ink/5 sm:hidden"
             >
             <svg
               width="22"
@@ -174,7 +160,7 @@ export function RootLayout() {
 
       {/* mobile slide-out drawer (kept mounted for the transition) */}
       <div
-        className={`fixed inset-0 z-50 overflow-hidden md:hidden ${menuOpen ? '' : 'pointer-events-none'}`}
+        className={`fixed inset-0 z-50 overflow-hidden sm:hidden ${menuOpen ? '' : 'pointer-events-none'}`}
         aria-hidden={!menuOpen}
       >
         <button
