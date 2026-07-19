@@ -74,6 +74,10 @@ def test_context_reports_profiles_and_constants(ch_client):
     # cheap and green coincide in the seed, so overlap is high
     assert body["green_overlap_pct"] is not None
     assert body["green_overlap_pct"] > 50
+    # solar stats: seeded daytime bell → positive average, sunny midday, dark night
+    assert body["avg_solar_cf"] > 0
+    assert by_sp[24]["solar_cf_p50"] > 0  # ~11:30 UTC
+    assert by_sp[4]["solar_cf_p50"] == 0
 
 
 def test_bigger_household_saves_more(ch_client):
@@ -94,6 +98,29 @@ def test_bigger_household_saves_more(ch_client):
 
     assert pick(big)["saving_gbp"] > pick(medium)["saving_gbp"]
     assert big["baseline_cost_gbp_year"] > medium["baseline_cost_gbp_year"]
+
+
+def test_solar_lowers_the_baseline_and_keeps_windows_comparable(ch_client):
+    plain = _get(ch_client, "/api/battery/simulation?battery=10kwh").json()
+    solar = _get(ch_client, "/api/battery/simulation?battery=10kwh&solar=5kwp").json()
+
+    assert plain["solar_kwp"] == 0
+    assert solar["solar_kwp"] == 5
+    assert solar["solar_generation_kwh_year"] > 0
+    # the array pays part of the bill before the battery does anything
+    assert solar["baseline_cost_gbp_year"] < plain["baseline_cost_gbp_year"]
+    # both modes replay the identical half-hours (unconditional solar predicate)
+    assert solar["periods"] == plain["periods"]
+    # the typical day surfaces generation and solar-charging
+    lp = next(
+        r
+        for r in solar["runs"]
+        if r["strategy"] == "self_consumption" and r["optimizer"] == "lp"
+    )
+    assert sum(b["solar_kwh"] for b in lp["typical_day"]) > 0
+    assert all("charge_solar_kwh" in b for b in lp["typical_day"])
+
+    assert _get(ch_client, "/api/battery/simulation?solar=99kwp").status_code == 422
 
 
 def test_warming_up_returns_503(empty_ch):

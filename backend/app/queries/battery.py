@@ -50,6 +50,14 @@ HOUSEHOLDS: dict[str, int] = {
     "electrified": 6500,
 }
 
+# Domestic array sizes (kWp). Generation = national PV_Live capacity factor × kWp,
+# i.e. the typical-roof approximation documented on the explainer tab.
+SOLAR: dict[str, float] = {
+    "none": 0.0,
+    "3.5kwp": 3.5,
+    "5kwp": 5.0,
+}
+
 IMPORT_TARIFF = "E-1R-AGILE-24-10-01-C"
 EXPORT_TARIFF = "E-1R-AGILE-OUTGOING-19-05-13-C"
 REGION = "London (C)"
@@ -71,15 +79,18 @@ PRESETS: dict[str, BatterySpec] = {
     ]
 }
 
-# One decision row per half-hour: tariff rates + carbon + the synthetic household's
-# demand, matched on local month, day type and settlement period. Rows without carbon
-# are dropped so all three strategies backtest the same window.
+# One decision row per half-hour: tariff rates + carbon + solar capacity factor + the
+# synthetic household's demand, matched on local month, day type and settlement
+# period. Rows without carbon OR solar are dropped unconditionally — even for
+# solar=none — so every mode backtests the identical set of half-hours and the solar
+# toggle stays comparable.
 _PERIODS_SQL = """
 SELECT
     t.from_ts,
     t.import_p_kwh,
     t.export_p_kwh,
     t.intensity_gco2,
+    t.solar_cf,
     p.demand_kwh
 FROM mart_tariff_periods AS t
 LEFT JOIN mart_domestic_profile AS p
@@ -93,8 +104,10 @@ LEFT JOIN mart_domestic_profile AS p
         toHour(t.from_ts, 'Europe/London') * 2 + intDiv(toMinute(t.from_ts), 30) + 1
     )
 WHERE t.intensity_gco2 IS NOT NULL
+    AND t.solar_cf IS NOT NULL
     AND t.from_ts >= (
-        SELECT max(from_ts) FROM mart_tariff_periods WHERE intensity_gco2 IS NOT NULL
+        SELECT max(from_ts) FROM mart_tariff_periods
+        WHERE intensity_gco2 IS NOT NULL AND solar_cf IS NOT NULL
     ) - INTERVAL {m:UInt8} MONTH
 ORDER BY t.from_ts
 """
@@ -125,7 +138,7 @@ def _cached(key: tuple, value):
     return value
 
 
-def _fetch_periods(client: Client, months: int) -> list[Period]:
+def _fetch_periods(client: Client, months: int, solar_kwp: float = 0.0) -> list[Period]:
     rows = query_rows(client, _PERIODS_SQL, {"m": months})
     return [
         Period(
@@ -134,8 +147,9 @@ def _fetch_periods(client: Client, months: int) -> list[Period]:
             export_p_kwh=export_p,
             intensity_gco2=carbon,
             demand_kwh=demand or 0.0,
+            generation_kwh=(solar_cf or 0.0) * solar_kwp * 0.5,
         )
-        for from_ts, import_p, export_p, carbon, demand in rows
+        for from_ts, import_p, export_p, carbon, solar_cf, demand in rows
     ]
 
 
@@ -159,6 +173,8 @@ def _typical_day(dispatch: list[Dispatch]) -> list[DispatchBucket]:
             DispatchBucket(
                 settlement_period=sp,
                 charge_kwh=round(sum(d.charge_kwh for d in ds) / n, 4),
+                charge_solar_kwh=round(sum(d.charge_solar_kwh for d in ds) / n, 4),
+                solar_kwh=round(sum(d.period.generation_kwh for d in ds) / n, 4),
                 discharge_kwh=round(
                     sum(d.discharge_home_kwh + d.discharge_export_kwh for d in ds) / n,
                     4,
@@ -188,16 +204,28 @@ def _monthly(dispatch: list[Dispatch]) -> list[MonthlySaving]:
 
 
 def fetch_simulation(
-    client: Client, preset_key: str, months: int, household_key: str = "medium"
+    client: Client,
+    preset_key: str,
+    months: int,
+    household_key: str = "medium",
+    solar_key: str = "none",
 ) -> BatterySimulation | None:
     """Run every (strategy × optimizer) combination for a preset; None = no data yet."""
     spec = PRESETS[preset_key]
     household_kwh = HOUSEHOLDS[household_key]
-    key = ("simulation", preset_key, months, household_key, _data_stamp(client))
+    solar_kwp = SOLAR[solar_key]
+    key = (
+        "simulation",
+        preset_key,
+        months,
+        household_key,
+        solar_key,
+        _data_stamp(client),
+    )
     if (cached := _cache.get(key)) is not None:
         return cached  # type: ignore[return-value]
 
-    periods = _fetch_periods(client, months)
+    periods = _fetch_periods(client, months, solar_kwp)
     if not periods:
         return None
     if household_kwh != TDCV_KWH:
@@ -209,6 +237,7 @@ def fetch_simulation(
                 export_p_kwh=p.export_p_kwh,
                 intensity_gco2=p.intensity_gco2,
                 demand_kwh=p.demand_kwh * scale,
+                generation_kwh=p.generation_kwh,
             )
             for p in periods
         ]
@@ -247,6 +276,10 @@ def fetch_simulation(
     simulation = BatterySimulation(
         battery=spec,
         household_kwh=household_kwh,
+        solar_kwp=solar_kwp,
+        solar_generation_kwh_year=round(
+            sum(p.generation_kwh for p in periods) * annual, 0
+        ),
         window_from=periods[0].from_ts.date(),
         window_to=periods[-1].from_ts.date(),
         days=days,
@@ -267,7 +300,9 @@ def fetch_context(client: Client, months: int) -> BatteryContext | None:
     if (cached := _cache.get(key)) is not None:
         return cached  # type: ignore[return-value]
 
-    periods = _fetch_periods(client, months)
+    # Fetched at a nominal 1 kWp so each period's generation is cf × 0.5 — the
+    # capacity factor is recovered as generation × 2 for the explainer stats.
+    periods = _fetch_periods(client, months, solar_kwp=1.0)
     if not periods:
         return None
 
@@ -280,6 +315,7 @@ def fetch_context(client: Client, months: int) -> BatteryContext | None:
         imports = sorted(p.import_p_kwh for p in ps)
         exports = sorted(p.export_p_kwh for p in ps)
         carbon = sorted(p.intensity_gco2 for p in ps if p.intensity_gco2 is not None)
+        solar_cf = sorted(p.generation_kwh * 2 for p in ps)
         intraday.append(
             PriceCarbonBucket(
                 settlement_period=sp,
@@ -290,6 +326,7 @@ def fetch_context(client: Client, months: int) -> BatteryContext | None:
                 import_p90=round(_quantile(imports, 0.9), 2),
                 export_p50=round(_quantile(exports, 0.5), 2),
                 carbon_p50=round(_quantile(carbon, 0.5), 1) if carbon else None,
+                solar_cf_p50=round(_quantile(solar_cf, 0.5), 3) if solar_cf else None,
             )
         )
 
@@ -335,6 +372,9 @@ def fetch_context(client: Client, months: int) -> BatteryContext | None:
         region=REGION,
         avg_import_p_kwh=round(sum(p.import_p_kwh for p in periods) / len(periods), 2),
         avg_export_p_kwh=round(sum(p.export_p_kwh for p in periods) / len(periods), 2),
+        avg_solar_cf=round(
+            sum(p.generation_kwh * 2 for p in periods) / len(periods), 3
+        ),
         green_overlap_pct=green_overlap_pct,
         presets=list(PRESETS.values()),
         intraday=intraday,
